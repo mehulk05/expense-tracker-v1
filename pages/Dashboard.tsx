@@ -2,8 +2,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Cell, PieChart, Pie, Legend, LineChart, Line 
+  Cell, PieChart, Pie, LineChart, Line 
 } from 'recharts';
+import { Link } from 'react-router-dom';
 import { storage } from '../services/storage';
 import { Expense, Account, Category } from '../types';
 import { getSpendingInsights, parseNaturalLanguageExpense } from '../services/gemini';
@@ -18,6 +19,52 @@ const DashboardSkeleton = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 h-80 skeleton rounded-2xl"></div>
       <div className="h-80 skeleton rounded-2xl"></div>
+    </div>
+  </div>
+);
+
+const OnboardingJourney: React.FC<{ hasAccounts: boolean; hasCategories: boolean }> = ({ hasAccounts, hasCategories }) => (
+  <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl border border-slate-100 animate-in fade-in zoom-in duration-500">
+    <div className="max-w-2xl mx-auto text-center">
+      <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center text-indigo-600 mx-auto mb-8 shadow-inner">
+        <ICONS.Dashboard className="w-10 h-10" />
+      </div>
+      <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome to SpendWise</h2>
+      <p className="text-slate-500 mb-12 text-lg">Your financial command center is almost ready. Let's set up the essentials to start tracking.</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+        <Link to="/accounts" className={`group p-6 rounded-3xl border-2 transition-all ${hasAccounts ? 'border-emerald-100 bg-emerald-50' : 'border-slate-100 hover:border-indigo-200 hover:bg-indigo-50'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-2xl ${hasAccounts ? 'bg-emerald-500 text-white' : 'bg-indigo-100 text-indigo-600'}`}>
+              <ICONS.Account className="w-6 h-6" />
+            </div>
+            {hasAccounts && <span className="text-emerald-600 font-bold text-sm">✓ Done</span>}
+          </div>
+          <h3 className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">1. Add an Account</h3>
+          <p className="text-sm text-slate-500 mt-1">Link your Credit Cards, UPI, or Savings accounts.</p>
+        </Link>
+
+        <Link to="/categories" className={`group p-6 rounded-3xl border-2 transition-all ${hasCategories ? 'border-emerald-100 bg-emerald-50' : 'border-slate-100 hover:border-indigo-200 hover:bg-indigo-50'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-2xl ${hasCategories ? 'bg-emerald-500 text-white' : 'bg-indigo-100 text-indigo-600'}`}>
+              <ICONS.Category className="w-6 h-6" />
+            </div>
+            {hasCategories && <span className="text-emerald-600 font-bold text-sm">✓ Done</span>}
+          </div>
+          <h3 className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">2. Define Categories</h3>
+          <p className="text-sm text-slate-500 mt-1">Organize your spends into Groceries, Travel, etc.</p>
+        </Link>
+      </div>
+
+      <div className="mt-12 p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 text-left">
+        <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-500">
+           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-slate-700">Pro Tip</p>
+          <p className="text-xs text-slate-500">Once set up, you can use the AI bar to add expenses in plain English!</p>
+        </div>
+      </div>
     </div>
   </div>
 );
@@ -47,7 +94,6 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => { loadData(); }, []);
 
-  // Filtered Expenses
   const filteredExpenses = useMemo(() => {
     const now = new Date();
     return expenses.filter(e => {
@@ -58,7 +104,6 @@ const Dashboard: React.FC = () => {
     });
   }, [expenses, dateRange]);
 
-  // Comparison Metrics
   const lastMonthTotal = useMemo(() => {
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
@@ -73,7 +118,6 @@ const Dashboard: React.FC = () => {
   const totalSpent = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   const diffPercent = lastMonthTotal > 0 ? ((totalSpent - lastMonthTotal) / lastMonthTotal * 100).toFixed(0) : null;
 
-  // Streak Calculation (Days below daily average)
   const dailyAverage = totalSpent / (filteredExpenses.length || 1);
   const streak = useMemo(() => {
     let currentStreak = 0;
@@ -85,7 +129,7 @@ const Dashboard: React.FC = () => {
     
     const dates = Object.keys(dayTotals).sort().reverse();
     for (const d of dates) {
-      if (dayTotals[d] < 2000) currentStreak++; // 2000 is an arbitrary "good day" threshold
+      if (dayTotals[d] < 2000) currentStreak++;
       else break;
     }
     return currentStreak;
@@ -126,9 +170,8 @@ const Dashboard: React.FC = () => {
       await storage.saveExpense(newExp);
       setExpenses([newExp, ...expenses]);
       setAiText("");
-      alert(`Added ₹${newExp.amount} to ${categories.find(c => c.id === newExp.categoryId)?.name}!`);
     } else {
-      alert("AI couldn't fully understand. Please try being more specific (e.g., 'Spent 500 on dinner using HDFC')");
+      alert("AI couldn't fully understand. Please try being more specific.");
     }
     setParsingAi(false);
   };
@@ -163,9 +206,13 @@ const Dashboard: React.FC = () => {
 
   if (loading) return <DashboardSkeleton />;
 
+  // Show onboarding if essential setup is missing
+  if (accounts.length === 0 || categories.length === 0) {
+    return <OnboardingJourney hasAccounts={accounts.length > 0} hasCategories={categories.length > 0} />;
+  }
+
   return (
     <div className="space-y-6">
-      {/* AI Search/Input Bar */}
       <section className="relative group">
         <form onSubmit={handleAiSubmit} className="relative">
           <input 
@@ -188,7 +235,6 @@ const Dashboard: React.FC = () => {
         </form>
       </section>
 
-      {/* Date Range Selector & Streak */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">
           {(['week', 'month', 'year'] as const).map(range => (
@@ -241,7 +287,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Add Widget */}
       <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
         <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Quick Add</h3>
         <div className="flex gap-4 min-w-max pb-2">
@@ -265,7 +310,6 @@ const Dashboard: React.FC = () => {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Analytics Card */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-semibold text-slate-800 mb-6">Spending Trend</h3>
@@ -285,12 +329,11 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Budget Progress bars */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-semibold text-slate-800 mb-6">Monthly Budgets</h3>
             <div className="space-y-6">
               {categoryData.slice(0, 3).map((item, idx) => {
-                const budget = 5000 * (idx + 1); // Mock budget
+                const budget = 5000 * (idx + 1);
                 const progress = Math.min((item.value / budget) * 100, 100);
                 return (
                   <div key={item.name} className="space-y-2">
@@ -311,7 +354,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Sidebar Cards */}
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-semibold text-slate-800 mb-6">Recent Activity</h3>
@@ -346,7 +388,7 @@ const Dashboard: React.FC = () => {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <div className="flex items-center justify-center h-full text-slate-300 italic">Empty</div>}
+              ) : <div className="flex items-center justify-center h-full text-slate-300 italic">No category data</div>}
             </div>
           </div>
         </div>
