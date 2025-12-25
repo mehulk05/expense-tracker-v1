@@ -2,11 +2,7 @@
 import React from 'react';
 import { Account, Category } from './types';
 
-export const DEFAULT_ACCOUNTS: Account[] = [
-  { id: '1', name: 'HDFC Bank', type: 'debit', lastFour: '1234' },
-  { id: '2', name: 'ICICI Credit Card', type: 'credit', lastFour: '5678' },
-  { id: '3', name: 'GPay (UPI)', type: 'upi' },
-];
+export const DEFAULT_ACCOUNTS: Account[] = [];
 
 export const DEFAULT_CATEGORIES: Category[] = [
   { 

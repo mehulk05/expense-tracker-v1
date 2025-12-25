@@ -4,6 +4,7 @@ export type AccountType = 'credit' | 'debit' | 'upi';
 export interface Account {
   id: string;
   name: string;
+  nickname?: string;
   type: AccountType;
   lastFour?: string;
 }
