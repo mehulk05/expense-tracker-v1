@@ -33,12 +33,12 @@ export const getSpendingInsights = async (
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
-        systemInstruction: "You are a professional financial advisor. Analyze the given spending data and provide short, impactful, actionable financial advice. Focus on patterns and potential savings.",
+        systemInstruction: "You are a professional financial advisor. Analyze the given spending data and provide short, impactful insights.",
       }
     });
     return response.text || "I couldn't generate insights at this moment.";
   } catch (error) {
     console.error("Gemini Error:", error);
-    return "I'm having trouble analyzing your data right now. Please try again in a moment.";
+    return "Error generating insights. Please try again later.";
   }
 };

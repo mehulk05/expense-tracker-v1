@@ -9,7 +9,6 @@ const ExpenseManager: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [amount, setAmount] = useState('');
@@ -23,31 +22,21 @@ const ExpenseManager: React.FC = () => {
 
   const loadData = async () => {
     setLoading(true);
-    setError(null);
-    try {
-      const [exps, accs, cats] = await Promise.all([
-        storage.getExpenses(),
-        storage.getAccounts(),
-        storage.getCategories()
-      ]);
-      setExpenses(exps);
-      setAccounts(accs);
-      setCategories(cats);
-      
-      if (accs.length && !accountId) setAccountId(accs[0].id);
-      if (cats.length && !categoryId) {
-        setCategoryId(cats[0].id);
-        setSubCategory(cats[0].subCategories[0] || '');
-      }
-    } catch (err: any) {
-      if (err.code === 'permission-denied') {
-        setError("Database access denied. Please check your Firebase Security Rules.");
-      } else {
-        setError("An error occurred while loading data.");
-      }
-    } finally {
-      setLoading(false);
+    const [exps, accs, cats] = await Promise.all([
+      storage.getExpenses(),
+      storage.getAccounts(),
+      storage.getCategories()
+    ]);
+    setExpenses(exps);
+    setAccounts(accs);
+    setCategories(cats);
+    
+    if (accs.length && !accountId) setAccountId(accs[0].id);
+    if (cats.length && !categoryId) {
+      setCategoryId(cats[0].id);
+      setSubCategory(cats[0].subCategories[0] || '');
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -58,36 +47,28 @@ const ExpenseManager: React.FC = () => {
     e.preventDefault();
     if (!amount || !accountId || !categoryId) return;
 
-    try {
-      const newExpense: Expense = {
-        id: crypto.randomUUID(),
-        amount: parseFloat(amount),
-        date,
-        accountId,
-        categoryId,
-        subCategory,
-        description
-      };
+    const newExpense: Expense = {
+      id: crypto.randomUUID(),
+      amount: parseFloat(amount),
+      date,
+      accountId,
+      categoryId,
+      subCategory,
+      description
+    };
 
-      await storage.saveExpense(newExpense);
-      setExpenses([newExpense, ...expenses]);
-      
-      setAmount('');
-      setDescription('');
-      setShowAddForm(false);
-    } catch (err) {
-      alert("Failed to save expense. Check permissions.");
-    }
+    await storage.saveExpense(newExpense);
+    setExpenses([newExpense, ...expenses]);
+    
+    setAmount('');
+    setDescription('');
+    setShowAddForm(false);
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this expense?')) return;
-    try {
-      await storage.deleteExpense(id);
-      setExpenses(expenses.filter(e => e.id !== id));
-    } catch (err) {
-      alert("Failed to delete expense. Check permissions.");
-    }
+    await storage.deleteExpense(id);
+    setExpenses(expenses.filter(e => e.id !== id));
   };
 
   const filteredExpenses = expenses.filter(e => {
@@ -101,33 +82,14 @@ const ExpenseManager: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-800">My Expenses</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={loadData}
-            className="p-2 text-slate-500 hover:text-indigo-600 transition-colors"
-            title="Refresh Data"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-          </button>
-          <button 
-            onClick={() => setShowAddForm(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-          >
-            <ICONS.Plus className="w-5 h-5" />
-            <span>Add Expense</span>
-          </button>
-        </div>
+        <button 
+          onClick={() => setShowAddForm(true)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+        >
+          <ICONS.Plus className="w-5 h-5" />
+          <span>Add Expense</span>
+        </button>
       </div>
-
-      {error && (
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 text-amber-800">
-          <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-          <div>
-            <p className="font-semibold">{error}</p>
-            <p className="text-sm opacity-90">Go to Firebase Console &gt; Firestore &gt; Rules and set permission for authenticated users.</p>
-          </div>
-        </div>
-      )}
 
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
@@ -191,14 +153,6 @@ const ExpenseManager: React.FC = () => {
 
       {loading ? (
         <div className="p-12 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
-      ) : expenses.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-100">
-          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-            <ICONS.Expense className="w-10 h-10" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2">No expenses found</h3>
-          <p className="text-slate-500">Add your first expense to start tracking!</p>
-        </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="overflow-x-auto">
