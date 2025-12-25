@@ -9,6 +9,7 @@ const ExpenseManager: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [amount, setAmount] = useState('');
@@ -17,26 +18,35 @@ const ExpenseManager: React.FC = () => {
   const [categoryId, setCategoryId] = useState('');
   const [subCategory, setSubCategory] = useState('');
   const [description, setDescription] = useState('');
-  const [filterAccount, setFilterAccount] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
 
   const loadData = async () => {
     setLoading(true);
-    const [exps, accs, cats] = await Promise.all([
-      storage.getExpenses(),
-      storage.getAccounts(),
-      storage.getCategories()
-    ]);
-    setExpenses(exps);
-    setAccounts(accs);
-    setCategories(cats);
-    
-    if (accs.length && !accountId) setAccountId(accs[0].id);
-    if (cats.length && !categoryId) {
-      setCategoryId(cats[0].id);
-      setSubCategory(cats[0].subCategories[0] || '');
+    setError(null);
+    try {
+      const [exps, accs, cats] = await Promise.all([
+        storage.getExpenses(),
+        storage.getAccounts(),
+        storage.getCategories()
+      ]);
+      
+      setExpenses(exps);
+      setAccounts(accs);
+      setCategories(cats);
+      
+      if (accs.length && !accountId) setAccountId(accs[0].id);
+      if (cats.length && !categoryId) {
+        setCategoryId(cats[0].id);
+        setSubCategory(cats[0].subCategories[0] || '');
+      }
+    } catch (err: any) {
+      if (err.code === 'permission-denied') {
+        setError("Database access denied. Please verify your Firestore security rules.");
+      } else {
+        setError("Failed to load data. Please refresh the page.");
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -47,34 +57,37 @@ const ExpenseManager: React.FC = () => {
     e.preventDefault();
     if (!amount || !accountId || !categoryId) return;
 
-    const newExpense: Expense = {
-      id: crypto.randomUUID(),
-      amount: parseFloat(amount),
-      date,
-      accountId,
-      categoryId,
-      subCategory,
-      description
-    };
+    try {
+      const newExpense: Expense = {
+        id: crypto.randomUUID(),
+        amount: parseFloat(amount),
+        date,
+        accountId,
+        categoryId,
+        subCategory,
+        description
+      };
 
-    await storage.saveExpense(newExpense);
-    setExpenses([newExpense, ...expenses]);
-    
-    setAmount('');
-    setDescription('');
-    setShowAddForm(false);
+      await storage.saveExpense(newExpense);
+      setExpenses([newExpense, ...expenses]);
+      
+      setAmount('');
+      setDescription('');
+      setShowAddForm(false);
+    } catch (err) {
+      alert("Permission denied or database error. Could not save expense.");
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this expense?')) return;
-    await storage.deleteExpense(id);
-    setExpenses(expenses.filter(e => e.id !== id));
+    try {
+      await storage.deleteExpense(id);
+      setExpenses(expenses.filter(e => e.id !== id));
+    } catch (err) {
+      alert("Permission denied or database error. Could not delete expense.");
+    }
   };
-
-  const filteredExpenses = expenses.filter(e => {
-    return (filterAccount ? e.accountId === filterAccount : true) &&
-           (filterCategory ? e.categoryId === filterCategory : true);
-  });
 
   const selectedCategory = categories.find(c => c.id === categoryId);
 
@@ -91,9 +104,16 @@ const ExpenseManager: React.FC = () => {
         </button>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 p-4 rounded-2xl flex items-center gap-3 text-red-800">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <p className="text-sm font-medium">{error}</p>
+        </div>
+      )}
+
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-800">New Expense</h3>
               <button onClick={() => setShowAddForm(false)} className="text-slate-400 hover:text-slate-600 p-2">
@@ -167,7 +187,7 @@ const ExpenseManager: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredExpenses.map((exp) => (
+                {expenses.map((exp) => (
                   <tr key={exp.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{new Date(exp.date).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
