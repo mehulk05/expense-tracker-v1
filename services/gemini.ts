@@ -15,15 +15,15 @@ export const getSpendingInsights = async (
     amount: e.amount,
     date: e.date,
     category: categories.find(c => c.id === e.categoryId)?.name,
-    subCategory: e.subCategory,
+    isPersonal: e.personalExpense ?? true,
     desc: e.description
   }));
 
   const prompt = `
     Analyze these expenses. Provide:
     1. Anomaly Detection: Flag any unusual spending spikes.
-    2. Predictive Spending: Forecast where the user will end the month based on current velocity.
-    3. Actionable Advice: 2 specific tips to save money.
+    2. Personal vs Business: Insights on the split between personal and non-personal spends.
+    3. Actionable Advice: 2 specific tips to save money based on categories.
     
     Current Month Velocity Context: ${expenses.length} transactions totaling ₹${expenses.reduce((s, e) => s + e.amount, 0)}.
     Data: ${JSON.stringify(summary.slice(0, 40))}
@@ -52,9 +52,10 @@ export const parseNaturalLanguageExpense = async (
   const prompt = `
     Extract expense details from this text: "${text}"
     Available Accounts: ${accounts.map(a => `${a.name} (ID: ${a.id})`).join(', ')}
-    Available Categories: ${categories.map(c => `${c.name} (ID: ${c.id}) subcategories: ${c.subCategories.join(', ')}`).join(' | ')}
+    Available Categories: ${categories.map(c => `${c.name} (ID: ${c.id})`).join(', ')}
     
     Current Date: ${new Date().toISOString().split('T')[0]}
+    Determine if it is a personal expense (default true unless it sounds like a business/tax/client expense).
   `;
 
   try {
@@ -70,7 +71,7 @@ export const parseNaturalLanguageExpense = async (
             date: { type: Type.STRING },
             accountId: { type: Type.STRING },
             categoryId: { type: Type.STRING },
-            subCategory: { type: Type.STRING },
+            personalExpense: { type: Type.BOOLEAN },
             description: { type: Type.STRING },
           },
           required: ["amount", "categoryId", "accountId"]

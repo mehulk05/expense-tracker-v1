@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Cell, PieChart, Pie, LineChart, Line 
+  Cell, PieChart, Pie, BarChart, Bar, Legend
 } from 'recharts';
 import { Link } from 'react-router-dom';
 import { storage } from '../services/storage';
@@ -96,22 +96,18 @@ const Dashboard: React.FC = () => {
 
   const totalSpent = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
+  const personalTotal = filteredExpenses
+    .filter(e => e.personalExpense ?? true)
+    .reduce((sum, e) => sum + e.amount, 0);
+  
+  const otherTotal = totalSpent - personalTotal;
+
   const categoryData = categories.map(cat => {
     const value = filteredExpenses
       .filter(e => e.categoryId === cat.id)
       .reduce((sum, e) => sum + e.amount, 0);
     return { name: cat.name, value, id: cat.id };
-  }).filter(item => item.value > 0);
-
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const amount = expenses
-      .filter(e => e.date === dateStr)
-      .reduce((sum, e) => sum + e.amount, 0);
-    return { date: dateStr.split('-').slice(2).join('/'), amount };
-  }).reverse();
+  }).filter(item => item.value > 0).sort((a, b) => b.value - a.value);
 
   const handleAiSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +121,7 @@ const Dashboard: React.FC = () => {
         date: parsed.date || new Date().toISOString().split('T')[0],
         accountId: parsed.accountId,
         categoryId: parsed.categoryId,
-        subCategory: parsed.subCategory || 'Other',
+        personalExpense: parsed.personalExpense ?? true,
         description: parsed.description || aiText
       } as Expense;
       await storage.saveExpense(newExp);
@@ -137,26 +133,6 @@ const Dashboard: React.FC = () => {
     setParsingAi(false);
   };
 
-  const handleQuickAdd = async (catName: string, sub: string) => {
-    const cat = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
-    if (!cat || !accounts.length) return;
-    const amountStr = prompt(`Add ${sub} amount:`);
-    if (!amountStr || isNaN(Number(amountStr))) return;
-    
-    const newExp: Expense = {
-      id: crypto.randomUUID(),
-      amount: Number(amountStr),
-      date: new Date().toISOString().split('T')[0],
-      accountId: accounts[0].id,
-      categoryId: cat.id,
-      subCategory: sub,
-      description: `Quick Add: ${sub}`
-    };
-    await storage.saveExpense(newExp);
-    setExpenses([newExp, ...expenses]);
-  };
-
-  // Fix: Added missing handleGetInsights function to fetch insights from Gemini API
   const handleGetInsights = async () => {
     if (loadingInsights || expenses.length === 0) return;
     setLoadingInsights(true);
@@ -171,6 +147,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const splitData = [
+    { name: 'Personal', value: personalTotal },
+    { name: 'Other', value: otherTotal }
+  ].filter(d => d.value > 0);
+
   const COLORS = ['#1e293b', '#64748b', '#94a3b8', '#cbd5e1', '#475569', '#334155'];
 
   if (loading) return <DashboardSkeleton />;
@@ -180,7 +161,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* AI Bar - Refined */}
       <section>
         <form onSubmit={handleAiSubmit} className="ai-input-bar relative flex items-center p-1.5">
           <div className="pl-4 pr-3 text-slate-400">
@@ -203,7 +183,6 @@ const Dashboard: React.FC = () => {
         </form>
       </section>
 
-      {/* Date Toggle - Refined */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200/40">
           {(['week', 'month', 'year'] as const).map(range => (
@@ -216,123 +195,99 @@ const Dashboard: React.FC = () => {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-full text-xs font-bold">
-           <span>STREAK: 7 DAYS</span>
-        </div>
       </div>
 
-      {/* Key Metrics - Smaller */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card-professional p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Expenditure</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Spends</p>
           <p className="text-2xl font-extrabold text-slate-900">₹{totalSpent.toLocaleString()}</p>
         </div>
         <div className="card-professional p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Logs</p>
-          <p className="text-2xl font-extrabold text-slate-900">{filteredExpenses.length}</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Personal</p>
+          <p className="text-2xl font-extrabold text-indigo-600">₹{personalTotal.toLocaleString()}</p>
         </div>
         <div className="card-professional p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Daily Average</p>
-          <p className="text-2xl font-extrabold text-slate-900">₹{(totalSpent / (filteredExpenses.length || 1)).toFixed(0)}</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Other Spends</p>
+          <p className="text-2xl font-extrabold text-slate-600">₹{otherTotal.toLocaleString()}</p>
         </div>
         <div className="card-professional p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Active Accounts</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Accounts</p>
           <p className="text-2xl font-extrabold text-slate-900">{accounts.length}</p>
         </div>
       </div>
 
-      {/* Main Grid - Refined */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <div className="card-professional p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-6">Velocity Trend</h3>
+            <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-wider">Top Categories</h3>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={last7Days}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} />
+                <BarChart data={categoryData.slice(0, 6)} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: '700'}} width={80} />
                   <Tooltip 
+                    cursor={{fill: '#f8fafc'}}
                     contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: 'none'}}
                     itemStyle={{fontSize: '12px', fontWeight: '600'}}
                   />
-                  <Line type="stepAfter" dataKey="amount" stroke="#0f172a" strokeWidth={2} dot={false} activeDot={{r: 4}} />
-                </LineChart>
+                  <Bar dataKey="value" fill="#1e293b" radius={[0, 4, 4, 0]} barSize={20} />
+                </BarChart>
               </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="card-professional p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-6">Allocation Summary</h3>
-            <div className="space-y-4">
-              {categoryData.slice(0, 4).map((item) => {
-                const percentage = Math.min((item.value / totalSpent) * 100, 100);
-                return (
-                  <div key={item.name} className="space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs font-bold text-slate-700">{item.name}</p>
-                      <p className="text-[10px] font-bold text-slate-500">₹{item.value.toLocaleString()}</p>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-slate-900 h-full rounded-full transition-all duration-1000" style={{ width: `${percentage}%` }}></div>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>
 
         <div className="space-y-6">
           <div className="card-professional p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-6">Recent Records</h3>
+             <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-wider text-center">Split Breakdown</h3>
+             <div className="h-[180px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={splitData} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={2} dataKey="value">
+                      {splitData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.name === 'Personal' ? '#4f46e5' : '#94a3b8'} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend iconType="circle" wrapperStyle={{fontSize: '10px', fontWeight: '700'}} />
+                  </PieChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+
+          <div className="card-professional p-6">
+            <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-wider">Recent Activity</h3>
             <div className="space-y-3">
-              {expenses.slice(0, 5).map(exp => (
-                <div key={exp.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-transparent hover:border-slate-100 transition-all">
-                  <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-900 font-bold text-[10px]">
-                    {categories.find(c => c.id === exp.categoryId)?.name[0]}
+              {expenses.slice(0, 4).map(exp => (
+                <div key={exp.id} className="flex items-center gap-3 p-2 rounded-lg border border-transparent hover:border-slate-100 transition-all">
+                  <div className="w-8 h-8 rounded bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-900 font-bold text-[10px]">
+                    {categories.find(c => c.id === exp.categoryId)?.name[0] || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 truncate">{exp.description || exp.subCategory}</p>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">{new Date(exp.date).toLocaleDateString()}</p>
+                    <p className="text-xs font-bold text-slate-800 truncate">{exp.description || 'Spend Entry'}</p>
+                    <p className="text-[8px] text-slate-400 font-bold uppercase">{exp.personalExpense ?? true ? 'Personal' : 'Other'}</p>
                   </div>
                   <p className="text-xs font-extrabold text-slate-900">₹{exp.amount}</p>
                 </div>
               ))}
             </div>
           </div>
-
-          <div className="card-professional p-6">
-             <h3 className="text-sm font-bold text-slate-900 mb-6">Distribution</h3>
-             <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={2} dataKey="value">
-                      {categoryData.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-             </div>
-          </div>
         </div>
       </div>
       
-      {/* AI Insights - Refined */}
       <div className="bg-slate-900 rounded-xl p-8 text-white shadow-lg">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-lg font-extrabold mb-1 tracking-tight">Financial Intelligence</h2>
-            <p className="text-slate-400 text-xs">AI-driven analysis of your spending behaviors.</p>
+            <h2 className="text-lg font-extrabold mb-1 tracking-tight">AI Financial Analyst</h2>
+            <p className="text-slate-400 text-xs">Deep learning analysis of your spending habits.</p>
           </div>
           <button 
             onClick={handleGetInsights}
             disabled={loadingInsights || expenses.length === 0}
             className="btn-secondary py-1.5 px-4 bg-white text-slate-900 border-none font-extrabold text-[10px] uppercase tracking-wider"
           >
-            {loadingInsights ? "Analyzing..." : "Refresh Intelligence"}
+            {loadingInsights ? "Crunching Data..." : "Generate Analysis"}
           </button>
         </div>
         {insights && (

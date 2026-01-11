@@ -9,11 +9,12 @@ export interface Account {
   lastFour?: string;
 }
 
+// Added optional 'type' and 'subCategories' to match objects in constants.tsx
 export interface Category {
   id: string;
   name: string;
-  type: 'personal' | 'other';
-  subCategories: string[];
+  type?: 'personal' | 'other';
+  subCategories?: string[];
 }
 
 export interface Expense {
@@ -22,7 +23,7 @@ export interface Expense {
   date: string;
   accountId: string;
   categoryId: string;
-  subCategory: string;
+  personalExpense: boolean; // true = personal, false = other
   description: string;
 }
 
