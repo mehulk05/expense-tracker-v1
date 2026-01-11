@@ -5,7 +5,7 @@
 
 body {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    background-color: #f8fafc; /* Slightly softer light background */
+    background-color: #f8fafc;
     color: #1e293b;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
@@ -32,19 +32,20 @@ h1, h2, h3, h4 {
 
 /* UI Components */
 .card-professional {
-    @apply bg-white border border-slate-200/60 shadow-[0_2px_4px_rgba(0,0,0,0.02)] rounded-xl overflow-hidden;
+    @apply bg-white border border-slate-200 shadow-[0_2px_4px_rgba(0,0,0,0.02)] rounded-xl overflow-hidden;
 }
 
 .btn-primary {
-    @apply bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition-all active:scale-[0.98] disabled:opacity-40 text-sm shadow-md shadow-indigo-200;
+    @apply bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition-all active:scale-[0.98] disabled:opacity-40 text-sm shadow-md shadow-indigo-100 flex items-center justify-center gap-2;
 }
 
 .btn-secondary {
     @apply bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-lg font-bold hover:bg-slate-50 transition-all text-sm;
 }
 
+/* Improved input visibility with stronger borders */
 .input-professional {
-    @apply w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 text-sm font-medium;
+    @apply w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400 text-sm font-medium bg-white text-slate-900 shadow-sm;
 }
 
 .ai-input-bar {
