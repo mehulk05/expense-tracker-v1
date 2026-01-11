@@ -30,11 +30,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const userInitial = user?.displayName?.[0] || user?.email?.[0] || 'U';
 
   return (
-    <div className="flex min-h-screen bg-[#fcfcfd]">
+    <div className="flex min-h-screen bg-[#f8fafc]">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-slate-200/60 sticky top-0 h-screen">
         <div className="p-8 flex items-center gap-3">
-          <div className="w-9 h-9 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-xl shadow-sm">
+          <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-200">
             S
           </div>
           <span className="text-lg font-extrabold text-slate-900 tracking-tighter">SpendWise</span>
@@ -50,11 +50,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                   isActive 
-                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10' 
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+                    : 'text-slate-500 hover:text-indigo-600 hover:bg-indigo-50'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'}`} />
+                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} />
                 <span className="font-bold text-sm">{item.name}</span>
               </Link>
             );
@@ -83,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                <p className="text-xs font-black text-slate-900">{user?.displayName || 'User'}</p>
                <p className="text-[10px] text-slate-400 font-bold">{user?.email}</p>
              </div>
-             <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-900 font-black uppercase text-sm">
+             <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-indigo-600 font-black uppercase text-sm">
                {userInitial}
              </div>
           </div>
@@ -104,10 +104,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               key={item.path}
               to={item.path}
               className={`flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
-                isActive ? 'text-slate-900' : 'text-slate-400'
+                isActive ? 'text-indigo-600' : 'text-slate-400'
               }`}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : ''}`} />
               <span className="text-[9px] font-black uppercase tracking-tight">{item.name}</span>
             </Link>
           );

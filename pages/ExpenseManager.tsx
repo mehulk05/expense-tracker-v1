@@ -63,12 +63,12 @@ const ExpenseManager: React.FC = () => {
     return filter === 'personal' ? expIsPersonal : !expIsPersonal;
   });
 
-  if (loading) return <div className="p-20 text-center"><div className="animate-spin h-6 w-6 border-b-2 border-slate-900 inline-block"></div></div>;
+  if (loading) return <div className="p-20 text-center"><div className="animate-spin h-6 w-6 border-b-2 border-indigo-600 inline-block"></div></div>;
 
   if (categories.length === 0) {
     return (
       <div className="card-professional p-12 text-center max-w-lg mx-auto mt-12">
-        <div className="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 mx-auto mb-6">
+        <div className="w-14 h-14 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-300 mx-auto mb-6">
           <ICONS.Category className="w-7 h-7" />
         </div>
         <h2 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Setup Required</h2>
@@ -91,7 +91,7 @@ const ExpenseManager: React.FC = () => {
           <select 
             value={filter} 
             onChange={(e) => setFilter(e.target.value as any)}
-            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 font-black text-[10px] uppercase tracking-wider outline-none focus:border-slate-900"
+            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 font-black text-[10px] uppercase tracking-wider outline-none focus:border-indigo-500"
           >
             <option value="all">Full Record</option>
             <option value="personal">Personal only</option>
@@ -104,23 +104,23 @@ const ExpenseManager: React.FC = () => {
       </div>
 
       {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/10 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-10 w-full max-w-sm shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-indigo-900/10 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-10 w-full max-w-sm shadow-2xl border border-slate-100">
             <h3 className="text-lg font-black text-slate-900 mb-8 uppercase tracking-tighter">New Entry</h3>
             <form onSubmit={handleAddExpense} className="space-y-6">
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Value (INR)</label>
-                <input required type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="input-professional !text-2xl font-black" placeholder="0.00" />
+                <input required type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="input-professional !text-2xl font-black focus:border-indigo-500" placeholder="0.00" />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Date</label>
-                  <input type="date" required value={date} onChange={e => setDate(e.target.value)} className="input-professional" />
+                  <input type="date" required value={date} onChange={e => setDate(e.target.value)} className="input-professional focus:border-indigo-500" />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Source</label>
-                  <select value={accountId} onChange={e => setAccountId(e.target.value)} className="input-professional bg-slate-50 font-bold">
+                  <select value={accountId} onChange={e => setAccountId(e.target.value)} className="input-professional bg-slate-50 font-bold focus:border-indigo-500">
                     {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
                   </select>
                 </div>
@@ -131,7 +131,7 @@ const ExpenseManager: React.FC = () => {
                 <select 
                   value={categoryId} 
                   onChange={e => setCategoryId(e.target.value)}
-                  className="input-professional bg-slate-50 font-bold"
+                  className="input-professional bg-slate-50 font-bold focus:border-indigo-500"
                 >
                   {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                 </select>
@@ -143,14 +143,14 @@ const ExpenseManager: React.FC = () => {
                   id="personal" 
                   checked={isPersonal} 
                   onChange={e => setIsPersonal(e.target.checked)}
-                  className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900"
+                  className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
                 />
                 <label htmlFor="personal" className="text-sm font-bold text-slate-700 cursor-pointer">Personal account spend</label>
               </div>
 
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Reference</label>
-                <input value={description} onChange={e => setDescription(e.target.value)} className="input-professional" placeholder="Add remarks..." />
+                <input value={description} onChange={e => setDescription(e.target.value)} className="input-professional focus:border-indigo-500" placeholder="Add remarks..." />
               </div>
 
               <div className="flex gap-4 pt-4">
@@ -177,17 +177,17 @@ const ExpenseManager: React.FC = () => {
               {filteredExpenses.map((exp) => {
                 const expIsPersonal = exp.personalExpense ?? true;
                 return (
-                  <tr key={exp.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={exp.id} className="hover:bg-indigo-50/30 transition-colors group">
                     <td className="px-6 py-5 font-bold text-slate-500 text-xs">{new Date(exp.date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</td>
                     <td className="px-6 py-5">
                       <span className={`text-[9px] font-black px-2.5 py-1 rounded uppercase tracking-tighter border ${
-                        expIsPersonal ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200'
+                        expIsPersonal ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-500 border-slate-200'
                       }`}>
                         {expIsPersonal ? 'Personal' : 'Institutional'}
                       </span>
                     </td>
                     <td className="px-6 py-5">
-                      <p className="font-black text-slate-900 text-sm">{categories.find(c => c.id === exp.categoryId)?.name}</p>
+                      <p className="font-black text-slate-900 text-sm group-hover:text-indigo-700 transition-colors">{categories.find(c => c.id === exp.categoryId)?.name}</p>
                       <p className="text-[10px] text-slate-400 font-bold uppercase truncate max-w-[200px]">{exp.description || '-'}</p>
                     </td>
                     <td className="px-6 py-5 text-right font-black text-slate-900 text-sm">₹{exp.amount.toLocaleString()}</td>

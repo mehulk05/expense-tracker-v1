@@ -5,8 +5,8 @@
 
 body {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    background-color: #fcfcfd; /* Clean light background */
-    color: #0f172a;
+    background-color: #f8fafc; /* Slightly softer light background */
+    color: #1e293b;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
 }
@@ -32,11 +32,11 @@ h1, h2, h3, h4 {
 
 /* UI Components */
 .card-professional {
-    @apply bg-white border border-slate-200/60 shadow-[0_1px_2px_rgba(0,0,0,0.03)] rounded-xl overflow-hidden;
+    @apply bg-white border border-slate-200/60 shadow-[0_2px_4px_rgba(0,0,0,0.02)] rounded-xl overflow-hidden;
 }
 
 .btn-primary {
-    @apply bg-slate-900 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-40 text-sm;
+    @apply bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition-all active:scale-[0.98] disabled:opacity-40 text-sm shadow-md shadow-indigo-200;
 }
 
 .btn-secondary {
@@ -44,11 +44,11 @@ h1, h2, h3, h4 {
 }
 
 .input-professional {
-    @apply w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-sm font-medium;
+    @apply w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 text-sm font-medium;
 }
 
 .ai-input-bar {
-  @apply bg-white border border-slate-200 focus-within:border-slate-900 focus-within:ring-4 focus-within:ring-slate-900/5 transition-all shadow-sm rounded-xl;
+  @apply bg-white border border-slate-200 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all shadow-sm rounded-xl;
 }
 
 /* Skeleton Animation */

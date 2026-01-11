@@ -38,11 +38,11 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fcfcfd] p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-slate-100">
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl shadow-indigo-100 overflow-hidden border border-slate-100">
         <div className="p-10 md:p-14">
           <div className="flex flex-col items-center mb-12">
-            <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-2xl mb-4 shadow-xl shadow-slate-900/10">
+            <div className="w-14 h-14 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-2xl mb-4 shadow-xl shadow-indigo-200">
               S
             </div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tighter">SpendWise</h1>
@@ -55,7 +55,7 @@ const Login: React.FC = () => {
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Identity</label>
                 <input 
                   type="text" required value={name} onChange={e => setName(e.target.value)}
-                  className="input-professional"
+                  className="input-professional focus:border-indigo-500"
                   placeholder="Your Full Name"
                 />
               </div>
@@ -64,7 +64,7 @@ const Login: React.FC = () => {
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email Access</label>
               <input 
                 type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                className="input-professional"
+                className="input-professional focus:border-indigo-500"
                 placeholder="identity@spendwise.com"
               />
             </div>
@@ -72,7 +72,7 @@ const Login: React.FC = () => {
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Secret Key</label>
               <input 
                 type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                className="input-professional"
+                className="input-professional focus:border-indigo-500"
                 placeholder="••••••••"
               />
             </div>
@@ -91,7 +91,7 @@ const Login: React.FC = () => {
           <div className="mt-10 text-center">
             <button 
               onClick={() => setIsLogin(!isLogin)}
-              className="text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-slate-900 transition-colors"
+              className="text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-indigo-600 transition-colors"
             >
               {isLogin ? "Join the network" : 'Return to login'}
             </button>

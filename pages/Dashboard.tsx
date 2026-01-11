@@ -94,6 +94,8 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const COLORS = ['#4f46e5', '#818cf8', '#c7d2fe', '#6366f1', '#4338ca', '#312e81'];
+
   if (loading) return <div className="space-y-6"><div className="h-12 skeleton rounded-xl"></div><div className="grid grid-cols-4 gap-4"><div className="h-28 skeleton rounded-xl"></div><div className="h-28 skeleton rounded-xl"></div><div className="h-28 skeleton rounded-xl"></div><div className="h-28 skeleton rounded-xl"></div></div></div>;
 
   return (
@@ -101,7 +103,7 @@ const Dashboard: React.FC = () => {
       {/* AI Log Bar */}
       <section>
         <form onSubmit={handleAiSubmit} className="ai-input-bar relative flex items-center p-1.5">
-          <div className="pl-4 pr-3 text-slate-400">
+          <div className="pl-4 pr-3 text-indigo-500">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
           <input 
@@ -127,7 +129,7 @@ const Dashboard: React.FC = () => {
           <button 
             key={range}
             onClick={() => setDateRange(range)}
-            className={`px-6 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all ${dateRange === range ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-6 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all ${dateRange === range ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
             {range}
           </button>
@@ -138,11 +140,11 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Expenditure', val: `₹${totalSpent.toLocaleString()}`, color: 'text-slate-900' },
-          { label: 'Personal', val: `₹${personalTotal.toLocaleString()}`, color: 'text-slate-900' },
+          { label: 'Personal', val: `₹${personalTotal.toLocaleString()}`, color: 'text-indigo-600' },
           { label: 'Other', val: `₹${otherTotal.toLocaleString()}`, color: 'text-slate-500' },
           { label: 'Logs', val: filteredExpenses.length, color: 'text-slate-900' }
         ].map((m, i) => (
-          <div key={i} className="card-professional p-6">
+          <div key={i} className="card-professional p-6 hover:border-indigo-100 transition-colors">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{m.label}</p>
             <p className={`text-2xl font-black ${m.color}`}>{m.val}</p>
           </div>
@@ -162,7 +164,7 @@ const Dashboard: React.FC = () => {
                   cursor={{fill: '#f8fafc'}}
                   contentStyle={{borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: 'none', fontWeight: '800', fontSize: '10px'}}
                 />
-                <Bar dataKey="value" fill="#0f172a" radius={[0, 4, 4, 0]} barSize={24} />
+                <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -175,7 +177,7 @@ const Dashboard: React.FC = () => {
                 <PieChart>
                   <Pie data={splitData} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="value">
                     {splitData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.name === 'Personal' ? '#0f172a' : '#cbd5e1'} stroke="none" />
+                      <Cell key={`cell-${index}`} fill={entry.name === 'Personal' ? '#4f46e5' : '#e2e8f0'} stroke="none" />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -189,7 +191,7 @@ const Dashboard: React.FC = () => {
                 {expenses.slice(0, 3).map(exp => (
                   <div key={exp.id} className="flex justify-between items-center group">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-900 truncate">{exp.description || 'Spend Entry'}</p>
+                      <p className="text-xs font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{exp.description || 'Spend Entry'}</p>
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{categories.find(c => c.id === exp.categoryId)?.name}</p>
                     </div>
                     <p className="text-xs font-black text-slate-900 ml-4">₹{exp.amount}</p>
@@ -201,23 +203,23 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* AI Insights */}
-      <div className="bg-slate-900 rounded-2xl p-10 text-white shadow-2xl shadow-slate-900/20">
+      <div className="bg-indigo-900 rounded-2xl p-10 text-white shadow-2xl shadow-indigo-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
             <h2 className="text-xl font-black mb-1 tracking-tight">Financial Intelligence</h2>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Powered by Gemini AI</p>
+            <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest">Powered by Gemini AI</p>
           </div>
           <button 
             onClick={handleGetInsights}
             disabled={loadingInsights || expenses.length === 0}
-            className="bg-white text-slate-900 px-6 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 disabled:opacity-30 transition-all"
+            className="bg-white text-indigo-900 px-6 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 disabled:opacity-30 transition-all shadow-lg"
           >
             {loadingInsights ? "Crunching Data..." : "Analyze Portfolio"}
           </button>
         </div>
         {insights ? (
-          <div className="bg-white/5 border border-white/10 rounded-xl p-8 backdrop-blur-sm">
-            <p className="text-sm leading-relaxed text-slate-300 font-medium whitespace-pre-wrap">{insights}</p>
+          <div className="bg-white/10 border border-white/20 rounded-xl p-8 backdrop-blur-sm">
+            <p className="text-sm leading-relaxed text-indigo-50 font-medium whitespace-pre-wrap">{insights}</p>
           </div>
         ) : (
           <div className="text-center py-10 opacity-30">
