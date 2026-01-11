@@ -10,55 +10,6 @@ import { Expense, Account, Category } from '../types';
 import { getSpendingInsights, parseNaturalLanguageExpense } from '../services/gemini';
 import { ICONS } from '../constants';
 
-const DashboardSkeleton = () => (
-  <div className="space-y-6">
-    <div className="h-12 w-full skeleton rounded-xl"></div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {[1,2,3,4].map(i => <div key={i} className="h-28 skeleton rounded-xl"></div>)}
-    </div>
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 h-72 skeleton rounded-xl"></div>
-      <div className="h-72 skeleton rounded-xl"></div>
-    </div>
-  </div>
-);
-
-const OnboardingJourney: React.FC<{ hasAccounts: boolean; hasCategories: boolean }> = ({ hasAccounts, hasCategories }) => (
-  <div className="card-professional p-10 md:p-16 animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto mt-8">
-    <div className="text-center">
-      <div className="w-16 h-16 bg-slate-50 rounded-xl flex items-center justify-center text-slate-900 mx-auto mb-6 border border-slate-100">
-        <ICONS.Dashboard className="w-8 h-8" />
-      </div>
-      <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Initialize Your Workspace</h2>
-      <p className="text-slate-500 mb-10 max-w-md mx-auto">Set up your financial framework to unlock AI insights and tracking.</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-        <Link to="/accounts" className={`group p-6 rounded-xl border transition-all ${hasAccounts ? 'border-emerald-100 bg-emerald-50/50' : 'border-slate-200 hover:border-slate-400'}`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className={`p-2 rounded-lg ${hasAccounts ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'}`}>
-              <ICONS.Account className="w-5 h-5" />
-            </div>
-            {hasAccounts && <span className="text-emerald-600 font-bold text-xs">READY</span>}
-          </div>
-          <h3 className="font-bold text-slate-900">1. Link Accounts</h3>
-          <p className="text-xs text-slate-500 mt-1">Connect your cards and digital wallets.</p>
-        </Link>
-
-        <Link to="/categories" className={`group p-6 rounded-xl border transition-all ${hasCategories ? 'border-emerald-100 bg-emerald-50/50' : 'border-slate-200 hover:border-slate-400'}`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className={`p-2 rounded-lg ${hasCategories ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'}`}>
-              <ICONS.Category className="w-5 h-5" />
-            </div>
-            {hasCategories && <span className="text-emerald-600 font-bold text-xs">READY</span>}
-          </div>
-          <h3 className="font-bold text-slate-900">2. Setup Categories</h3>
-          <p className="text-xs text-slate-500 mt-1">Organize transactions into segments.</p>
-        </Link>
-      </div>
-    </div>
-  </div>
-);
-
 const Dashboard: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -95,19 +46,18 @@ const Dashboard: React.FC = () => {
   }, [expenses, dateRange]);
 
   const totalSpent = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-  const personalTotal = filteredExpenses
-    .filter(e => e.personalExpense ?? true)
-    .reduce((sum, e) => sum + e.amount, 0);
-  
+  const personalTotal = filteredExpenses.filter(e => e.personalExpense ?? true).reduce((sum, e) => sum + e.amount, 0);
   const otherTotal = totalSpent - personalTotal;
 
   const categoryData = categories.map(cat => {
-    const value = filteredExpenses
-      .filter(e => e.categoryId === cat.id)
-      .reduce((sum, e) => sum + e.amount, 0);
-    return { name: cat.name, value, id: cat.id };
+    const value = filteredExpenses.filter(e => e.categoryId === cat.id).reduce((sum, e) => sum + e.amount, 0);
+    return { name: cat.name, value };
   }).filter(item => item.value > 0).sort((a, b) => b.value - a.value);
+
+  const splitData = [
+    { name: 'Personal', value: personalTotal },
+    { name: 'Other', value: otherTotal }
+  ].filter(d => d.value > 0);
 
   const handleAiSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,8 +77,6 @@ const Dashboard: React.FC = () => {
       await storage.saveExpense(newExp);
       setExpenses([newExp, ...expenses]);
       setAiText("");
-    } else {
-      alert("AI interpretation failed. Please be more explicit.");
     }
     setParsingAi(false);
   };
@@ -140,27 +88,17 @@ const Dashboard: React.FC = () => {
       const result = await getSpendingInsights(expenses, accounts, categories);
       setInsights(result);
     } catch (error) {
-      console.error("Failed to fetch insights:", error);
-      setInsights("Unable to generate insights at this moment.");
+      setInsights("Unable to generate analysis.");
     } finally {
       setLoadingInsights(false);
     }
   };
 
-  const splitData = [
-    { name: 'Personal', value: personalTotal },
-    { name: 'Other', value: otherTotal }
-  ].filter(d => d.value > 0);
-
-  const COLORS = ['#1e293b', '#64748b', '#94a3b8', '#cbd5e1', '#475569', '#334155'];
-
-  if (loading) return <DashboardSkeleton />;
-  if (accounts.length === 0 || categories.length === 0) {
-    return <OnboardingJourney hasAccounts={accounts.length > 0} hasCategories={categories.length > 0} />;
-  }
+  if (loading) return <div className="space-y-6"><div className="h-12 skeleton rounded-xl"></div><div className="grid grid-cols-4 gap-4"><div className="h-28 skeleton rounded-xl"></div><div className="h-28 skeleton rounded-xl"></div><div className="h-28 skeleton rounded-xl"></div><div className="h-28 skeleton rounded-xl"></div></div></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* AI Log Bar */}
       <section>
         <form onSubmit={handleAiSubmit} className="ai-input-bar relative flex items-center p-1.5">
           <div className="pl-4 pr-3 text-slate-400">
@@ -170,129 +108,121 @@ const Dashboard: React.FC = () => {
             type="text" 
             value={aiText}
             onChange={(e) => setAiText(e.target.value)}
-            placeholder="Type your expense: '₹400 for lunch using HDFC'..." 
-            className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder:text-slate-400 text-sm font-medium py-2"
+            placeholder="Log expense: '400 for lunch via HDFC'..." 
+            className="flex-1 bg-transparent border-none outline-none text-slate-900 placeholder:text-slate-400 text-sm font-bold py-2.5"
           />
           <button 
             type="submit"
             disabled={parsingAi}
-            className="bg-slate-900 text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 disabled:opacity-50 transition-all ml-2"
+            className="btn-primary !py-2 !px-6 text-xs uppercase tracking-widest"
           >
-            {parsingAi ? "Processing..." : "Log Entry"}
+            {parsingAi ? "Syncing..." : "Quick Log"}
           </button>
         </form>
       </section>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200/40">
-          {(['week', 'month', 'year'] as const).map(range => (
-            <button 
-              key={range}
-              onClick={() => setDateRange(range)}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold capitalize transition-all ${dateRange === range ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              {range}
-            </button>
-          ))}
-        </div>
+      {/* Date Toggle */}
+      <div className="flex bg-slate-100 p-1 rounded-lg w-fit border border-slate-200/40">
+        {(['week', 'month', 'year'] as const).map(range => (
+          <button 
+            key={range}
+            onClick={() => setDateRange(range)}
+            className={`px-6 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all ${dateRange === range ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            {range}
+          </button>
+        ))}
       </div>
 
+      {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card-professional p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Spends</p>
-          <p className="text-2xl font-extrabold text-slate-900">₹{totalSpent.toLocaleString()}</p>
-        </div>
-        <div className="card-professional p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Personal</p>
-          <p className="text-2xl font-extrabold text-indigo-600">₹{personalTotal.toLocaleString()}</p>
-        </div>
-        <div className="card-professional p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Other Spends</p>
-          <p className="text-2xl font-extrabold text-slate-600">₹{otherTotal.toLocaleString()}</p>
-        </div>
-        <div className="card-professional p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Accounts</p>
-          <p className="text-2xl font-extrabold text-slate-900">{accounts.length}</p>
-        </div>
+        {[
+          { label: 'Expenditure', val: `₹${totalSpent.toLocaleString()}`, color: 'text-slate-900' },
+          { label: 'Personal', val: `₹${personalTotal.toLocaleString()}`, color: 'text-slate-900' },
+          { label: 'Other', val: `₹${otherTotal.toLocaleString()}`, color: 'text-slate-500' },
+          { label: 'Logs', val: filteredExpenses.length, color: 'text-slate-900' }
+        ].map((m, i) => (
+          <div key={i} className="card-professional p-6">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{m.label}</p>
+            <p className={`text-2xl font-black ${m.color}`}>{m.val}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="card-professional p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-wider">Top Categories</h3>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryData.slice(0, 6)} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: '700'}} width={80} />
-                  <Tooltip 
-                    cursor={{fill: '#f8fafc'}}
-                    contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: 'none'}}
-                    itemStyle={{fontSize: '12px', fontWeight: '600'}}
-                  />
-                  <Bar dataKey="value" fill="#1e293b" radius={[0, 4, 4, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 card-professional p-8">
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">Allocation by Category</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryData} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: '800'}} width={90} />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: 'none', fontWeight: '800', fontSize: '10px'}}
+                />
+                <Bar dataKey="value" fill="#0f172a" radius={[0, 4, 4, 0]} barSize={24} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="card-professional p-6">
-             <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-wider text-center">Split Breakdown</h3>
-             <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={splitData} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={2} dataKey="value">
-                      {splitData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.name === 'Personal' ? '#4f46e5' : '#94a3b8'} stroke="none" />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend iconType="circle" wrapperStyle={{fontSize: '10px', fontWeight: '700'}} />
-                  </PieChart>
-                </ResponsiveContainer>
-             </div>
-          </div>
-
-          <div className="card-professional p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-wider">Recent Activity</h3>
-            <div className="space-y-3">
-              {expenses.slice(0, 4).map(exp => (
-                <div key={exp.id} className="flex items-center gap-3 p-2 rounded-lg border border-transparent hover:border-slate-100 transition-all">
-                  <div className="w-8 h-8 rounded bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-900 font-bold text-[10px]">
-                    {categories.find(c => c.id === exp.categoryId)?.name[0] || '?'}
+        <div className="card-professional p-8">
+           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 text-center">Wallet Distribution</h3>
+           <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={splitData} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="value">
+                    {splitData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.name === 'Personal' ? '#0f172a' : '#cbd5e1'} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '10px', fontWeight: '800', textTransform: 'uppercase'}} />
+                </PieChart>
+              </ResponsiveContainer>
+           </div>
+           <div className="mt-8 pt-8 border-t border-slate-100">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recent Activity</h4>
+              <div className="space-y-4">
+                {expenses.slice(0, 3).map(exp => (
+                  <div key={exp.id} className="flex justify-between items-center group">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-900 truncate">{exp.description || 'Spend Entry'}</p>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{categories.find(c => c.id === exp.categoryId)?.name}</p>
+                    </div>
+                    <p className="text-xs font-black text-slate-900 ml-4">₹{exp.amount}</p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 truncate">{exp.description || 'Spend Entry'}</p>
-                    <p className="text-[8px] text-slate-400 font-bold uppercase">{exp.personalExpense ?? true ? 'Personal' : 'Other'}</p>
-                  </div>
-                  <p className="text-xs font-extrabold text-slate-900">₹{exp.amount}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+           </div>
         </div>
       </div>
       
-      <div className="bg-slate-900 rounded-xl p-8 text-white shadow-lg">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      {/* AI Insights */}
+      <div className="bg-slate-900 rounded-2xl p-10 text-white shadow-2xl shadow-slate-900/20">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h2 className="text-lg font-extrabold mb-1 tracking-tight">AI Financial Analyst</h2>
-            <p className="text-slate-400 text-xs">Deep learning analysis of your spending habits.</p>
+            <h2 className="text-xl font-black mb-1 tracking-tight">Financial Intelligence</h2>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Powered by Gemini AI</p>
           </div>
           <button 
             onClick={handleGetInsights}
             disabled={loadingInsights || expenses.length === 0}
-            className="btn-secondary py-1.5 px-4 bg-white text-slate-900 border-none font-extrabold text-[10px] uppercase tracking-wider"
+            className="bg-white text-slate-900 px-6 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 disabled:opacity-30 transition-all"
           >
-            {loadingInsights ? "Crunching Data..." : "Generate Analysis"}
+            {loadingInsights ? "Crunching Data..." : "Analyze Portfolio"}
           </button>
         </div>
-        {insights && (
-          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+        {insights ? (
+          <div className="bg-white/5 border border-white/10 rounded-xl p-8 backdrop-blur-sm">
             <p className="text-sm leading-relaxed text-slate-300 font-medium whitespace-pre-wrap">{insights}</p>
+          </div>
+        ) : (
+          <div className="text-center py-10 opacity-30">
+            <ICONS.Dashboard className="w-12 h-12 mx-auto mb-4" />
+            <p className="text-xs font-bold uppercase tracking-widest">Analysis Pending</p>
           </div>
         )}
       </div>

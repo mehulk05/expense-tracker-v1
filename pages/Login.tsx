@@ -31,69 +31,69 @@ const Login: React.FC = () => {
       }
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please try again.');
+      setError(err.message || 'Authentication failed.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100">
-        <div className="p-8 md:p-12">
-          <div className="flex flex-col items-center mb-10">
-            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl mb-4 shadow-lg shadow-indigo-200">
+    <div className="min-h-screen flex items-center justify-center bg-[#fcfcfd] p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-slate-100">
+        <div className="p-10 md:p-14">
+          <div className="flex flex-col items-center mb-12">
+            <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-2xl mb-4 shadow-xl shadow-slate-900/10">
               S
             </div>
-            <h1 className="text-3xl font-bold text-slate-800">SpendWise</h1>
-            <p className="text-slate-500 mt-2 text-center">Your personal path to financial freedom.</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tighter">SpendWise</h1>
+            <p className="text-slate-400 mt-2 text-xs font-bold uppercase tracking-widest">Financial Command Center</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Full Name</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Identity</label>
                 <input 
                   type="text" required value={name} onChange={e => setName(e.target.value)}
-                  className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                  placeholder="John Doe"
+                  className="input-professional"
+                  placeholder="Your Full Name"
                 />
               </div>
             )}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Email Address</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email Access</label>
               <input 
                 type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                placeholder="email@example.com"
+                className="input-professional"
+                placeholder="identity@spendwise.com"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Password</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Secret Key</label>
               <input 
                 type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                className="input-professional"
                 placeholder="••••••••"
               />
             </div>
 
-            {error && <p className="text-red-500 text-sm bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
+            {error && <p className="text-rose-600 text-[11px] font-bold bg-rose-50 p-3 rounded-lg border border-rose-100">{error}</p>}
 
             <button 
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all transform active:scale-[0.98] shadow-lg shadow-indigo-100 disabled:opacity-50"
+              className="w-full btn-primary !py-4 text-xs uppercase tracking-widest"
             >
-              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+              {loading ? 'Authenticating...' : (isLogin ? 'Establish Session' : 'Create Profile')}
             </button>
           </form>
 
-          <div className="mt-8 text-center">
+          <div className="mt-10 text-center">
             <button 
               onClick={() => setIsLogin(!isLogin)}
-              className="text-indigo-600 font-semibold hover:underline"
+              className="text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-slate-900 transition-colors"
             >
-              {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+              {isLogin ? "Join the network" : 'Return to login'}
             </button>
           </div>
         </div>

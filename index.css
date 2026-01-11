@@ -5,20 +5,20 @@
 
 body {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    background-color: #fcfcfd;
-    color: #1a1c1e;
+    background-color: #fcfcfd; /* Clean light background */
+    color: #0f172a;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
 }
 
 h1, h2, h3, h4 {
     letter-spacing: -0.025em;
+    font-weight: 700;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -27,11 +27,28 @@ h1, h2, h3, h4 {
 
 ::-webkit-scrollbar-thumb {
     background: #e2e8f0;
-    border-radius: 4px;
+    border-radius: 10px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
+/* UI Components */
+.card-professional {
+    @apply bg-white border border-slate-200/60 shadow-[0_1px_2px_rgba(0,0,0,0.03)] rounded-xl overflow-hidden;
+}
+
+.btn-primary {
+    @apply bg-slate-900 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-40 text-sm;
+}
+
+.btn-secondary {
+    @apply bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-lg font-bold hover:bg-slate-50 transition-all text-sm;
+}
+
+.input-professional {
+    @apply w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-sm font-medium;
+}
+
+.ai-input-bar {
+  @apply bg-white border border-slate-200 focus-within:border-slate-900 focus-within:ring-4 focus-within:ring-slate-900/5 transition-all shadow-sm rounded-xl;
 }
 
 /* Skeleton Animation */
@@ -41,27 +58,8 @@ h1, h2, h3, h4 {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f8fafc 25%, #f1f5f9 50%, #f8fafc 75%);
+  @apply bg-slate-100;
+  background-image: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-}
-
-.card-professional {
-    @apply bg-white border border-slate-200/60 shadow-sm rounded-xl overflow-hidden;
-}
-
-.btn-primary {
-    @apply bg-slate-900 text-white px-4 py-2 rounded-lg font-semibold hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-50 text-sm;
-}
-
-.btn-secondary {
-    @apply bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-50 transition-all text-sm;
-}
-
-.input-professional {
-    @apply w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400 text-sm;
-}
-
-.ai-input-bar {
-  @apply bg-white border border-slate-200 focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all shadow-sm rounded-xl;
 }
