@@ -3,53 +3,81 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --bg-main: #f8fafc;
+  --surface: #ffffff;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+}
+
 body {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    background-color: #f8fafc;
-    color: #1e293b;
+    background-color: var(--bg-main);
+    color: var(--text-main);
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
 }
 
-h1, h2, h3, h4 {
-    letter-spacing: -0.025em;
-    font-weight: 700;
+/* Layout Reset */
+* {
+  box-sizing: border-box;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 5px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 10px;
-}
-
-/* UI Components */
+/* Card System */
 .card-professional {
-    @apply bg-white border border-slate-200 shadow-[0_2px_4px_rgba(0,0,0,0.02)] rounded-xl overflow-hidden;
+    @apply bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-200;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
+.card-professional:hover {
+    @apply border-indigo-200 shadow-md;
+}
+
+/* Button System */
 .btn-primary {
-    @apply bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition-all active:scale-[0.98] disabled:opacity-40 text-sm shadow-md shadow-indigo-100 flex items-center justify-center gap-2;
+    @apply bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition-all active:scale-[0.98] disabled:opacity-40 text-sm flex items-center justify-center gap-2;
 }
 
 .btn-secondary {
-    @apply bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-lg font-bold hover:bg-slate-50 transition-all text-sm;
+    @apply bg-white border border-slate-300 text-slate-700 px-5 py-2.5 rounded-lg font-bold hover:bg-slate-50 hover:border-slate-400 transition-all text-sm flex items-center justify-center gap-2;
 }
 
-/* Improved input visibility with stronger borders */
+/* Form System - High Visibility */
 .input-professional {
-    @apply w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400 text-sm font-medium bg-white text-slate-900 shadow-sm;
+    @apply w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400 text-sm font-medium bg-white text-slate-900 shadow-sm;
 }
 
+select.input-professional {
+    @apply appearance-none bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-size: 1.5em 1.5em;
+}
+
+.label-professional {
+    @apply block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5;
+}
+
+/* AI Elements */
 .ai-input-bar {
-  @apply bg-white border border-slate-200 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all shadow-sm rounded-xl;
+  @apply bg-white border-2 border-slate-200 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all rounded-2xl shadow-lg shadow-indigo-50/50;
+}
+
+/* Table Refinement */
+table {
+  @apply w-full border-collapse;
+}
+
+th {
+  @apply bg-slate-50/80 backdrop-blur px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200;
+}
+
+td {
+  @apply px-6 py-4 border-b border-slate-100 text-slate-600;
 }
 
 /* Skeleton Animation */
