@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { storage } from '../services/storage';
 import { Category } from '../types';
@@ -30,7 +29,7 @@ const CategoryManager: React.FC = () => {
     if (!cleanName) return;
 
     if (categories.some(c => c.name.toLowerCase() === cleanName.toLowerCase())) {
-      setError(`Collision: "${cleanName}" is already an active category.`);
+      setError(`Classification Conflict: "${cleanName}" is already active.`);
       return;
     }
 
@@ -44,47 +43,50 @@ const CategoryManager: React.FC = () => {
   };
 
   const deleteCategory = async (id: string) => {
-    if (!window.confirm('Confirm category deletion? Past transactions will remain logged but uncategorized.')) return;
+    if (!window.confirm('Delete classification? Previous entries will remain but lose their tag.')) return;
     await storage.deleteCategory(id);
     setCategories(categories.filter(c => c.id !== id));
   };
 
   if (loading) return (
-     <div className="space-y-6 max-w-3xl mx-auto">
-       <div className="h-44 skeleton rounded-2xl w-full"></div>
-       <div className="h-64 skeleton rounded-2xl w-full"></div>
+     <div className="space-y-10 max-w-4xl mx-auto">
+       <div className="h-56 skeleton rounded-3xl w-full"></div>
+       <div className="h-96 skeleton rounded-3xl w-full"></div>
      </div>
   );
 
   return (
-    <div className="space-y-10 max-w-3xl mx-auto animate-in fade-in duration-500">
-      {/* Category Creation Card */}
-      <div className="card-professional p-10">
-        <h2 className="text-xl font-black text-slate-900 mb-8 tracking-tighter uppercase">Spending Classifications</h2>
+    <div className="space-y-12 max-w-4xl mx-auto animate-in fade-in duration-500">
+      {/* Configuration Hub */}
+      <div className="card-professional p-12 shadow-xl shadow-slate-200/50">
+        <h2 className="text-2xl font-black text-slate-900 mb-10 tracking-tighter uppercase">Classification Hub</h2>
         
-        <div className="space-y-10">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="label-professional">New Category</label>
+        <div className="space-y-12">
+          <div className="flex flex-col sm:flex-row gap-6 items-end">
+            <div className="flex-1 w-full">
+              <label className="label-professional">New Classification Label</label>
               <input 
                 value={newCatName} 
                 onChange={e => { setNewCatName(e.target.value); setError(null); }} 
                 onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
-                className="input-professional" 
-                placeholder="e.g. Travel / Fitness" 
+                className="input-professional !py-4" 
+                placeholder="e.g. Health / Software / Logistics" 
               />
             </div>
-            <button onClick={() => handleAddCategory()} className="btn-primary sm:mt-6 px-10 whitespace-nowrap shadow-indigo-200">
-              <ICONS.Plus className="w-4 h-4" />
-              <span className="text-[10px] uppercase tracking-widest">Add Category</span>
+            <button onClick={() => handleAddCategory()} className="btn-primary !py-4 px-12 whitespace-nowrap shadow-indigo-200">
+              <ICONS.Plus className="w-5 h-5" />
+              <span className="text-[11px] uppercase tracking-widest">Register Label</span>
             </button>
           </div>
           
-          {error && <p className="text-xs font-black text-rose-500 px-1 animate-in slide-in-from-left-2">{error}</p>}
+          {error && <p className="text-xs font-black text-rose-500 px-1 animate-in slide-in-from-left-4 bg-rose-50 py-3 rounded-lg border border-rose-100 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+            {error}
+          </p>}
 
-          <div className="pt-4 border-t border-slate-100">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Discovery Suggestions</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="pt-8 border-t border-slate-100">
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-8">System Suggestions</p>
+            <div className="flex flex-wrap gap-3">
               {SUGGESTED_CATEGORIES.map(suggested => {
                 const exists = categories.some(c => c.name.toLowerCase() === suggested.toLowerCase());
                 return (
@@ -92,10 +94,10 @@ const CategoryManager: React.FC = () => {
                     key={suggested}
                     disabled={exists}
                     onClick={() => handleAddCategory(suggested)}
-                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all border ${
+                    className={`px-5 py-3 rounded-xl text-xs font-black transition-all border-2 ${
                       exists 
                         ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed' 
-                        : 'bg-white text-slate-600 border-slate-300 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-600 hover:bg-indigo-50 hover:text-indigo-600 shadow-sm'
                     }`}
                   >
                     {suggested}
@@ -107,32 +109,37 @@ const CategoryManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Categories List */}
-      <div className="card-professional">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Inventory ({categories.length})</p>
+      {/* Active Inventory List */}
+      <div className="card-professional shadow-xl shadow-slate-200/50">
+        <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div>
+             <p className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Active Inventory</p>
+             <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{categories.length} registered classifications</p>
+          </div>
         </div>
         <div className="divide-y divide-slate-100">
           {categories.length === 0 ? (
-            <div className="p-20 text-center">
-               <ICONS.Category className="w-10 h-10 text-slate-200 mx-auto mb-4" />
-               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">The inventory is currently empty</p>
+            <div className="p-24 text-center">
+               <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mx-auto mb-6 border border-slate-100">
+                  <ICONS.Category className="w-8 h-8 opacity-30" />
+               </div>
+               <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em]">Registry Empty</p>
             </div>
           ) : (
             categories.map(cat => (
-              <div key={cat.id} className="px-8 py-5 flex items-center justify-between group hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-5">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-sm border border-indigo-100">
+              <div key={cat.id} className="px-10 py-6 flex items-center justify-between group hover:bg-slate-50/50 transition-all border-l-4 border-l-transparent hover:border-l-indigo-600">
+                <div className="flex items-center gap-6">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-base border border-indigo-100 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all">
                     {cat.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors text-base">{cat.name}</span>
+                  <span className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors text-lg tracking-tight">{cat.name}</span>
                 </div>
                 <button 
                   onClick={() => deleteCategory(cat.id)}
-                  className="text-slate-300 hover:text-rose-600 p-2.5 transition-all opacity-0 group-hover:opacity-100 hover:bg-rose-50 rounded-lg"
-                  title="Remove category"
+                  className="text-slate-300 hover:text-rose-600 p-3.5 transition-all opacity-0 group-hover:opacity-100 hover:bg-rose-50 rounded-2xl"
+                  title="Remove classification"
                 >
-                  <ICONS.Trash className="w-5 h-5" />
+                  <ICONS.Trash className="w-6 h-6" />
                 </button>
               </div>
             ))

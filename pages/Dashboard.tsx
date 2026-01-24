@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-// Added missing Link import from react-router-dom
 import { Link } from 'react-router-dom';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -96,42 +94,42 @@ const Dashboard: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="h-16 skeleton rounded-2xl w-full"></div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 skeleton rounded-xl"></div>)}
+        {[1, 2, 3, 4].map(i => <div key={i} className="h-36 skeleton rounded-xl"></div>)}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 h-80 skeleton rounded-xl"></div>
-        <div className="h-80 skeleton rounded-xl"></div>
+        <div className="lg:col-span-2 h-96 skeleton rounded-xl"></div>
+        <div className="h-96 skeleton rounded-xl"></div>
       </div>
     </div>
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
-      {/* AI Log Section */}
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-700">
+      {/* AI Log Interaction Bar */}
       <section className="max-w-3xl mx-auto">
-        <form onSubmit={handleAiSubmit} className="ai-input-bar relative flex items-center p-2">
-          <div className="pl-4 pr-3 text-indigo-500">
+        <form onSubmit={handleAiSubmit} className="ai-input-bar flex items-center p-2.5">
+          <div className="pl-4 pr-3 text-indigo-600">
              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
           <input 
             type="text" 
             value={aiText}
             onChange={(e) => setAiText(e.target.value)}
-            placeholder="Quick log: 'Coffee 150 from HDFC'" 
+            placeholder="Log expense: 'Groceries 500 from ICICI'" 
             className="flex-1 bg-transparent border-none outline-none text-slate-900 placeholder:text-slate-400 text-base font-bold py-3"
           />
           <button 
             type="submit"
             disabled={parsingAi || !aiText}
-            className="btn-primary !px-6 !py-3 rounded-xl ml-2 shadow-indigo-200"
+            className="btn-primary !px-6 !py-3.5 rounded-xl ml-2 shadow-indigo-100"
           >
             {parsingAi ? (
               <div className="flex items-center gap-2">
                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                 <span className="text-[10px] uppercase tracking-widest">Parsing</span>
+                 <span className="text-[10px] uppercase tracking-widest">Processing</span>
               </div>
             ) : (
               <span className="text-[10px] uppercase tracking-widest">Add Entry</span>
@@ -140,31 +138,33 @@ const Dashboard: React.FC = () => {
         </form>
       </section>
 
-      {/* Date Toggle & Metrics */}
+      {/* Metrics Section */}
       <div className="space-y-6">
-        <div className="flex bg-slate-200/50 p-1 rounded-xl w-fit border border-slate-200">
-          {(['week', 'month', 'year'] as const).map(range => (
-            <button 
-              key={range}
-              onClick={() => setDateRange(range)}
-              className={`px-8 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${dateRange === range ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              {range}
-            </button>
-          ))}
+        <div className="flex justify-between items-end">
+          <div className="flex bg-slate-200 p-1 rounded-xl w-fit border border-slate-300/30">
+            {(['week', 'month', 'year'] as const).map(range => (
+              <button 
+                key={range}
+                onClick={() => setDateRange(range)}
+                className={`px-8 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${dateRange === range ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {[
-            { label: 'Expenditure', val: `₹${totalSpent.toLocaleString()}`, icon: ICONS.Expense, color: 'text-slate-900' },
-            { label: 'Personal', val: `₹${personalTotal.toLocaleString()}`, icon: ICONS.Account, color: 'text-indigo-600' },
-            { label: 'Other', val: `₹${otherTotal.toLocaleString()}`, icon: ICONS.Category, color: 'text-slate-500' },
+            { label: 'Outflow', val: `₹${totalSpent.toLocaleString()}`, icon: ICONS.Expense, color: 'text-slate-900' },
+            { label: 'Individual', val: `₹${personalTotal.toLocaleString()}`, icon: ICONS.Account, color: 'text-indigo-600' },
+            { label: 'Others', val: `₹${otherTotal.toLocaleString()}`, icon: ICONS.Category, color: 'text-slate-500' },
             { label: 'Transactions', val: filteredExpenses.length, icon: ICONS.Dashboard, color: 'text-slate-900' }
           ].map((m, i) => (
-            <div key={i} className="card-professional p-6 flex flex-col justify-between">
+            <div key={i} className="card-professional p-7 flex flex-col justify-between group">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{m.label}</span>
-                <m.icon className="w-4 h-4 text-slate-200" />
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">{m.label}</span>
+                <m.icon className="w-4 h-4 text-slate-300 group-hover:text-indigo-400 transition-colors" />
               </div>
               <p className={`text-2xl font-black ${m.color}`}>{m.val}</p>
             </div>
@@ -172,57 +172,59 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 card-professional p-8">
-          <div className="flex items-center justify-between mb-10">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Spending Profile</h3>
-            <span className="text-[10px] font-bold text-slate-300">Amount per category</span>
+      {/* Primary Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-2 card-professional p-10">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">Spending Profile</h3>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Volume per category</p>
+            </div>
           </div>
-          <div className="h-[320px]">
+          <div className="h-[340px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryData} layout="vertical" margin={{ left: 10, right: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                 <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: '800'}} width={100} />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: '800'}} width={110} />
                 <Tooltip 
                   cursor={{fill: '#f8fafc'}}
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: '800', fontSize: '11px'}}
+                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: '800', fontSize: '11px'}}
                 />
-                <Bar dataKey="value" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={28} />
+                <Bar dataKey="value" fill="#6366f1" radius={[0, 8, 8, 0]} barSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="card-professional p-8 flex flex-col">
-           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-10 text-center">Wallet Split</h3>
-           <div className="h-[220px] mb-8">
+        <div className="card-professional p-10 flex flex-col">
+           <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-12 text-center">Wallet Allocation</h3>
+           <div className="h-[240px] mb-10">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={splitData} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={8} dataKey="value">
+                  <Pie data={splitData} cx="50%" cy="50%" innerRadius={65} outerRadius={95} paddingAngle={8} dataKey="value">
                     {splitData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.name === 'Personal' ? '#4f46e5' : '#e2e8f0'} stroke="none" />
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', paddingTop: '20px'}} />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', paddingTop: '30px'}} />
                 </PieChart>
               </ResponsiveContainer>
            </div>
            <div className="mt-auto pt-8 border-t border-slate-100">
               <div className="flex items-center justify-between mb-6">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recent Activity</h4>
-                <Link to="/expenses" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline">View All</Link>
+                <Link to="/expenses" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline decoration-2 underline-offset-4">Browse All</Link>
               </div>
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {expenses.slice(0, 3).map(exp => (
                   <div key={exp.id} className="flex justify-between items-center group">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{exp.description || 'Spend Entry'}</p>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mt-0.5">{categories.find(c => c.id === exp.categoryId)?.name}</p>
+                      <p className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{exp.description || 'Spend Entry'}</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mt-1">{categories.find(c => c.id === exp.categoryId)?.name}</p>
                     </div>
-                    <p className="text-xs font-black text-slate-900 ml-4">₹{exp.amount}</p>
+                    <p className="text-sm font-black text-slate-900 ml-4">₹{exp.amount.toLocaleString()}</p>
                   </div>
                 ))}
               </div>
@@ -230,33 +232,33 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* AI Insights - Re-styled for light theme compatibility */}
-      <div className="bg-indigo-600 rounded-3xl p-10 text-white shadow-2xl shadow-indigo-200">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+      {/* AI Intelligence Section */}
+      <div className="bg-indigo-600 rounded-[2.5rem] p-12 text-white shadow-2xl shadow-indigo-200">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-12">
+          <div className="flex items-center gap-6">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/20">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight">Financial Intelligence</h2>
-              <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest">Analysis Engine active</p>
+              <h2 className="text-2xl font-black tracking-tighter">Financial Intelligence</h2>
+              <p className="text-indigo-200 text-[11px] font-bold uppercase tracking-[0.2em] mt-1">Deep Learning Analysis Engine</p>
             </div>
           </div>
           <button 
             onClick={handleGetInsights}
             disabled={loadingInsights || expenses.length === 0}
-            className="bg-white text-indigo-600 px-8 py-3 rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-indigo-50 disabled:opacity-30 transition-all shadow-xl"
+            className="bg-white text-indigo-600 px-10 py-4 rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-indigo-50 active:scale-95 disabled:opacity-30 transition-all shadow-xl shadow-indigo-900/20"
           >
-            {loadingInsights ? "Scanning Transactions..." : "Get AI Insights"}
+            {loadingInsights ? "Crunching Portfolio..." : "Generate AI Insights"}
           </button>
         </div>
         {insights ? (
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-8 backdrop-blur-lg">
-            <p className="text-sm leading-relaxed text-indigo-50 font-semibold whitespace-pre-wrap">{insights}</p>
+          <div className="bg-white/10 border border-white/20 rounded-3xl p-10 backdrop-blur-lg">
+            <p className="text-base leading-relaxed text-indigo-50 font-semibold whitespace-pre-wrap">{insights}</p>
           </div>
         ) : (
-          <div className="bg-white/5 border border-dashed border-white/20 rounded-2xl py-12 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-indigo-200">Insights available after review</p>
+          <div className="bg-white/5 border-2 border-dashed border-white/20 rounded-[2rem] py-16 text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-200">Portfolio scanning ready</p>
           </div>
         )}
       </div>
