@@ -73,7 +73,11 @@ const CategoryManager: React.FC = () => {
                 placeholder="e.g. Health / Software / Logistics" 
               />
             </div>
-            <button onClick={() => handleAddCategory()} className="btn-primary !py-4 px-12 whitespace-nowrap shadow-indigo-200">
+            <button 
+              onClick={() => handleAddCategory()} 
+              disabled={!newCatName.trim()}
+              className="btn-primary !py-4 px-12 whitespace-nowrap shadow-indigo-200"
+            >
               <ICONS.Plus className="w-5 h-5" />
               <span className="text-[11px] uppercase tracking-widest">Register Label</span>
             </button>
@@ -114,7 +118,7 @@ const CategoryManager: React.FC = () => {
         <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <div>
              <p className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Active Inventory</p>
-             <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{categories.length} registered classifications</p>
+             <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">{categories.length} registered classifications</p>
           </div>
         </div>
         <div className="divide-y divide-slate-100">
@@ -123,7 +127,7 @@ const CategoryManager: React.FC = () => {
                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mx-auto mb-6 border border-slate-100">
                   <ICONS.Category className="w-8 h-8 opacity-30" />
                </div>
-               <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em]">Registry Empty</p>
+               <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.3em]">Registry Empty</p>
             </div>
           ) : (
             categories.map(cat => (

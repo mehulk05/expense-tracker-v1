@@ -6,13 +6,21 @@ import Dashboard from './pages/Dashboard';
 import ExpenseManager from './pages/ExpenseManager';
 import AccountManager from './pages/AccountManager';
 import CategoryManager from './pages/CategoryManager';
+import BudgetManager from './pages/BudgetManager';
+import CreditCardManager from './pages/CreditCardManager';
+import SplitDashboard from './pages/splitwise/SplitDashboard';
+import PeopleManager from './pages/splitwise/PeopleManager';
+import GroupDetail from './pages/splitwise/GroupDetail';
+import GroupsManager from './pages/splitwise/GroupsManager';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
+      <ToastProvider>
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -48,9 +56,62 @@ const App: React.FC = () => {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/budget" 
+            element={
+              <ProtectedRoute>
+                <Layout><BudgetManager /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/credit-cards" 
+            element={
+              <ProtectedRoute>
+                <Layout><CreditCardManager /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+             path="/splitwise" 
+             element={
+               <ProtectedRoute>
+                 <Layout><SplitDashboard /></Layout>
+               </ProtectedRoute>
+             } 
+          />
+import GroupsManager from './pages/splitwise/GroupsManager';
+
+// ... (in Routes)
+
+          <Route 
+             path="/splitwise/groups" 
+             element={
+               <ProtectedRoute>
+                 <Layout><GroupsManager /></Layout>
+               </ProtectedRoute>
+             } 
+          />
+          <Route 
+             path="/splitwise/people" 
+             element={
+               <ProtectedRoute>
+                 <Layout><PeopleManager /></Layout>
+               </ProtectedRoute>
+             } 
+          />
+           <Route 
+             path="/splitwise/group/:id" 
+             element={
+               <ProtectedRoute>
+                 <Layout><GroupDetail /></Layout>
+               </ProtectedRoute>
+             } 
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 };

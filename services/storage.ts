@@ -1,12 +1,12 @@
 
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  setDoc, 
-  deleteDoc, 
-  query, 
-  orderBy 
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  query,
+  orderBy
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 import { Account, Category, Expense } from '../types';
@@ -25,7 +25,7 @@ export const storage = {
   getAccounts: async (): Promise<Account[]> => {
     const user = auth.currentUser;
     if (!user) return DEFAULT_ACCOUNTS;
-    
+
     try {
       const q = query(collection(db, `users/${user.uid}/accounts`));
       const snapshot = await getDocs(q);
@@ -35,7 +35,7 @@ export const storage = {
       return handleFirestoreError(error, DEFAULT_ACCOUNTS);
     }
   },
-  
+
   saveAccount: async (account: Account) => {
     const user = auth.currentUser;
     if (!user) return;
@@ -59,7 +59,7 @@ export const storage = {
   getCategories: async (): Promise<Category[]> => {
     const user = auth.currentUser;
     if (!user) return DEFAULT_CATEGORIES;
-    
+
     try {
       const q = query(collection(db, `users/${user.uid}/categories`));
       const snapshot = await getDocs(q);
@@ -93,7 +93,7 @@ export const storage = {
   getExpenses: async (): Promise<Expense[]> => {
     const user = auth.currentUser;
     if (!user) return [];
-    
+
     try {
       const q = query(
         collection(db, `users/${user.uid}/expenses`),
@@ -124,5 +124,123 @@ export const storage = {
     } catch (error) {
       handleFirestoreError(error, null);
     }
+  },
+
+  getBills: async (): Promise<import('../types').CreditCardBill[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/credit_card_bills`),
+        orderBy('month', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as import('../types').CreditCardBill));
+    } catch (error) {
+      return handleFirestoreError(error, []);
+    }
+  },
+
+  saveBill: async (bill: import('../types').CreditCardBill) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await setDoc(doc(db, `users/${user.uid}/credit_card_bills`, bill.id), bill);
+    } catch (error) {
+      handleFirestoreError(error, null);
+    }
+  },
+
+  deleteBill: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, `users/${user.uid}/credit_card_bills`, id));
+    } catch (error) {
+      handleFirestoreError(error, null);
+    }
+  },
+
+  // --- Splitwise Module ---
+
+  // People
+  getPeople: async (): Promise<import('../types').Person[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(collection(db, `users/${user.uid}/people`), orderBy('name'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as import('../types').Person));
+    } catch (error) {
+      return handleFirestoreError(error, []);
+    }
+  },
+  savePerson: async (person: import('../types').Person) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await setDoc(doc(db, `users/${user.uid}/people`, person.id), person);
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+  deletePerson: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await deleteDoc(doc(db, `users/${user.uid}/people`, id)); }
+    catch (error) { handleFirestoreError(error, null); }
+  },
+
+  // Groups
+  getGroups: async (): Promise<import('../types').SplitGroup[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(collection(db, `users/${user.uid}/split_groups`), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as import('../types').SplitGroup));
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
+  saveGroup: async (group: import('../types').SplitGroup) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await setDoc(doc(db, `users/${user.uid}/split_groups`, group.id), group); }
+    catch (error) { handleFirestoreError(error, null); }
+  },
+  deleteGroup: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await deleteDoc(doc(db, `users/${user.uid}/split_groups`, id)); }
+    catch (error) { handleFirestoreError(error, null); }
+  },
+
+  // Group Expenses
+  getGroupExpenses: async (groupId: string): Promise<import('../types').GroupExpense[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      // Note: Ideally we index by groupId, but for now simple collection query + client filter or compsite index
+      // Better: Store in subcollection? Or simplified root collection with groupId field. 
+      // Using root collection `split_expenses` with filter is easier for now.
+      const q = query(
+        collection(db, `users/${user.uid}/split_expenses`),
+        orderBy('date', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      // Client-side filtering for simplicity until compound indexes are guaranteed
+      const allExpenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as import('../types').GroupExpense));
+      return allExpenses.filter(e => e.groupId === groupId);
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
+  saveGroupExpense: async (expense: import('../types').GroupExpense) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await setDoc(doc(db, `users/${user.uid}/split_expenses`, expense.id), expense); }
+    catch (error) { handleFirestoreError(error, null); }
+  },
+  deleteGroupExpense: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await deleteDoc(doc(db, `users/${user.uid}/split_expenses`, id)); }
+    catch (error) { handleFirestoreError(error, null); }
   }
 };

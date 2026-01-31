@@ -20,12 +20,69 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     navigate('/login');
   };
 
-  const navItems = [
+  interface NavItem {
+    name: string;
+    path: string;
+    icon: any;
+    children?: NavItem[];
+  }
+
+  const navItems: NavItem[] = [
     { name: 'Dashboard', path: '/', icon: ICONS.Dashboard },
     { name: 'Expenses', path: '/expenses', icon: ICONS.Expense },
     { name: 'Accounts', path: '/accounts', icon: ICONS.Account },
     { name: 'Categories', path: '/categories', icon: ICONS.Category },
+    { name: 'Budget', path: '/budget', icon: ICONS.Dashboard },
+    { name: 'Cards', path: '/credit-cards', icon: ICONS.Cards },
+    { 
+      name: 'Splitwise', 
+      path: '/splitwise', 
+      icon: ICONS.Users,
+      children: [
+        { name: 'Overview', path: '/splitwise', icon: ICONS.Dashboard },
+        { name: 'Groups', path: '/splitwise/groups', icon: ICONS.Cards },
+        { name: 'Friends', path: '/splitwise/people', icon: ICONS.Account }
+      ]
+    },
   ];
+
+  const renderNavItem = (item: NavItem, depth = 0) => {
+      const isActive = location.pathname === item.path || (item.children && location.pathname.startsWith(item.path));
+      const Icon = item.icon;
+      const isChild = depth > 0;
+
+      // Check if we should show children (expanded)
+      // Expanded if it has children AND one of them (or the parent itself) is active
+      const isExpanded = item.children && isActive;
+
+      return (
+        <div key={item.path}>
+            <Link
+                to={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group flex-1 w-full ${
+                isActive && !item.children
+                    ? 'text-indigo-600 bg-indigo-50 font-black' // Active Leaf: Colored text, subtle bg
+                    : isActive && item.children
+                    ? 'text-slate-900 font-bold' // Active Parent
+                    : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-50 font-medium' // Inactive
+                } ${isChild ? 'pl-11 text-xs' : ''}`}
+            >
+                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-600'}`} />
+                <span className="font-bold text-sm">{item.name}</span>
+                {item.children && (
+                     <ICONS.ChevronRight className={`w-4 h-4 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                )}
+            </Link>
+            
+            {/* Submenu */}
+            {isExpanded && item.children && (
+                <div className="mt-1 space-y-1">
+                    {item.children.map(child => renderNavItem(child, depth + 1))}
+                </div>
+            )}
+        </div>
+      );
+  };
 
   const userInitial = user?.displayName?.[0] || user?.email?.[0] || 'U';
 
@@ -40,25 +97,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <span className="text-lg font-extrabold text-slate-900 tracking-tighter">SpendWise</span>
         </div>
         
-        <nav className="flex-1 px-4 space-y-1.5">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                  isActive 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
-                    : 'text-slate-500 hover:text-indigo-600 hover:bg-indigo-50'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} />
-                <span className="font-bold text-sm">{item.name}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+          {navItems.map(item => renderNavItem(item))}
         </nav>
 
         <div className="p-4 border-t border-slate-100">

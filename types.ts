@@ -1,5 +1,5 @@
 
-export type AccountType = 'credit' | 'debit' | 'upi';
+export type AccountType = 'credit' | 'debit' | 'upi' | 'cash';
 
 export interface Account {
   id: string;
@@ -15,6 +15,9 @@ export interface Category {
   name: string;
   type?: 'personal' | 'other';
   subCategories?: string[];
+  budget?: number; // Monthly budget limit
+  budgetFrequency?: 'monthly' | 'yearly';
+  rolloverEnabled?: boolean; // Carry forward unused budget
 }
 
 export interface Expense {
@@ -24,6 +27,7 @@ export interface Expense {
   accountId: string;
   categoryId: string;
   personalExpense: boolean; // true = personal, false = other
+  paymentMethod: AccountType;
   description: string;
 }
 
@@ -32,4 +36,47 @@ export interface DashboardStats {
   dailyAverage: number;
   topCategory: string;
   mostUsedAccount: string;
+}
+
+export interface CreditCardBill {
+  id: string;
+  cardId: string; // Links to Account.id
+  month: string; // Format: "YYYY-MM" (e.g. "2026-01")
+  statementDate?: string;
+  paidAmount: number;
+  paymentDate?: string;
+  status: 'paid' | 'partial' | 'unpaid';
+  notes?: string;
+}
+
+// Splitwise Module Types
+export interface Person {
+  id: string;
+  name: string;
+  email?: string; // Optional unique identifier
+  avatar?: string;
+}
+
+export interface SplitGroup {
+  id: string;
+  name: string;
+  description?: string;
+  currency: string;
+  memberIds: string[]; // List of Person IDs
+  createdAt: string;
+}
+
+export type SplitMethod = 'equal' | 'unequal' | 'percentage';
+
+export interface GroupExpense {
+  id: string;
+  groupId: string;
+  title: string;
+  amount: number;
+  date: string;
+  paidBy: string; // Person ID
+  participants: string[]; // List of Person IDs involved
+  splitMethod: SplitMethod;
+  splits?: Record<string, number>; // For unequal (amount) or percentage (percent)
+  notes?: string;
 }
