@@ -37,7 +37,7 @@ const SidePopover: React.FC<SidePopoverProps> = ({ isOpen, onClose, title, subti
 
       {/* Drawer */}
       <div 
-        className={`relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col transition-transform duration-300 ease-out border-l border-slate-100 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`relative w-full max-w-xl bg-white h-full shadow-2xl flex flex-col transition-transform duration-300 ease-out border-l border-slate-100 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-slate-50">

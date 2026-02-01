@@ -4,6 +4,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import ExpenseManager from './pages/ExpenseManager';
+import ExpenseOverview from './pages/ExpenseOverview';
 import AccountManager from './pages/AccountManager';
 import CategoryManager from './pages/CategoryManager';
 import BudgetManager from './pages/BudgetManager';
@@ -13,6 +14,8 @@ import PeopleManager from './pages/splitwise/PeopleManager';
 import GroupDetail from './pages/splitwise/GroupDetail';
 import GroupsManager from './pages/splitwise/GroupsManager';
 import Login from './pages/Login';
+import TodoApp from './pages/todo/TodoApp';
+import PlannedExpensesApp from './pages/planned/PlannedExpensesApp';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -39,6 +42,14 @@ const App: React.FC = () => {
                 <Layout><ExpenseManager /></Layout>
               </ProtectedRoute>
             } 
+          />
+          <Route 
+             path="/expenses/overview" 
+             element={
+               <ProtectedRoute>
+                 <Layout><ExpenseOverview /></Layout>
+               </ProtectedRoute>
+             } 
           />
           <Route 
             path="/accounts" 
@@ -80,9 +91,33 @@ const App: React.FC = () => {
                </ProtectedRoute>
              } 
           />
-import GroupsManager from './pages/splitwise/GroupsManager';
+          <Route 
+             path="/todo" 
+             element={
+               <ProtectedRoute>
+                 <Layout><TodoApp /></Layout>
+               </ProtectedRoute>
+             } 
+          />
+          <Route 
+             path="/todo/list" 
+             element={
+               <ProtectedRoute>
+                 <Layout><TodoApp /></Layout>
+               </ProtectedRoute>
+             } 
+          />
+          <Route 
+             path="/planned" 
+             element={
+               <ProtectedRoute>
+                 <Layout><PlannedExpensesApp /></Layout>
+               </ProtectedRoute>
+             } 
+          />
 
-// ... (in Routes)
+
+
 
           <Route 
              path="/splitwise/groups" 

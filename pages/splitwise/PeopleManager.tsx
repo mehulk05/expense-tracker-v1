@@ -236,9 +236,18 @@ const PeopleManager: React.FC = () => {
                     type="email" 
                     value={email} 
                     onChange={e => setEmail(e.target.value)}
-                    className="input-professional"
+                    className={`input-professional ${editingId && people.find(p => p.id === editingId)?.email === auth.currentUser?.email ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
                     placeholder="alice@example.com"
+                    disabled={!!(editingId && people.find(p => p.id === editingId)?.email === auth.currentUser?.email)}
                 />
+                {editingId && people.find(p => p.id === editingId)?.email === auth.currentUser?.email && (
+                    <div className="mt-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl flex gap-3 items-start">
+                        <svg className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <p className="text-[10px] text-indigo-800 font-medium leading-relaxed">
+                            This email is associated with your login account and cannot be modified here.
+                        </p>
+                    </div>
+                )}
             </div>
             <div className="pt-8 flex gap-4">
                  <button type="button" onClick={resetForm} className="flex-1 btn-secondary !py-4 uppercase tracking-widest text-[10px]">Cancel</button>

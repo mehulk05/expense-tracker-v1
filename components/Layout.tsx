@@ -29,7 +29,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems: NavItem[] = [
     { name: 'Dashboard', path: '/', icon: ICONS.Dashboard },
-    { name: 'Expenses', path: '/expenses', icon: ICONS.Expense },
+    { 
+      name: 'Tasks', 
+      path: '/todo', 
+      icon: ICONS.Check,
+      children: [
+        { name: 'Overview', path: '/todo', icon: ICONS.Dashboard },
+        { name: 'Todos', path: '/todo/list', icon: ICONS.CheckCircle }
+      ]
+    },
+    { 
+      name: 'Expenses', 
+      path: '/expenses', // Link to main expenses page so it expands correctly
+      icon: ICONS.Expense,
+      children: [
+        { name: 'Overview', path: '/expenses/overview', icon: ICONS.Dashboard },
+        { name: 'Actual Expense', path: '/expenses', icon: ICONS.Expense },
+        { name: 'Future Expense', path: '/planned', icon: ICONS.Calendar }
+      ]
+    },
     { name: 'Accounts', path: '/accounts', icon: ICONS.Account },
     { name: 'Categories', path: '/categories', icon: ICONS.Category },
     { name: 'Budget', path: '/budget', icon: ICONS.Dashboard },
@@ -47,7 +65,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const renderNavItem = (item: NavItem, depth = 0) => {
-      const isActive = location.pathname === item.path || (item.children && location.pathname.startsWith(item.path));
+      // Check if current path matches item path OR if any child is active
+      const isChildActive = item.children?.some(child => location.pathname === child.path || location.pathname.startsWith(child.path));
+      const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== '/') || isChildActive;
+      
       const Icon = item.icon;
       const isChild = depth > 0;
 

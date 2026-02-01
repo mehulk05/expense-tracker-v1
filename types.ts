@@ -80,3 +80,30 @@ export interface GroupExpense {
   splits?: Record<string, number>; // For unequal (amount) or percentage (percent)
   notes?: string;
 }
+
+export interface Todo {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+  isPinned?: boolean;
+  priority: 'low' | 'medium' | 'high';
+  createdAt: string;
+  dueDate?: string;
+  completedAt?: string;
+  category: string;
+  description?: string;
+}
+
+export interface PlannedExpense {
+  id: string;
+  name: string;
+  amount: number;
+  category: string;
+  frequency: 'one-time' | 'monthly' | 'yearly' | 'weekly';
+  dueDate: string; // ISO Date
+  status: 'upcoming' | 'due' | 'paid' | 'overdue';
+  paymentMethod: string;
+  cardId?: string; // Link to credit card if applicable
+  note?: string;
+  createdAt: string;
+}

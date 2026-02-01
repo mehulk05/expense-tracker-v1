@@ -21,6 +21,7 @@ const GroupsManager: React.FC = () => {
   const [groupName, setGroupName] = useState('');
   const [currency, setCurrency] = useState('INR');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [groupTotals, setGroupTotals] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadData();
@@ -28,12 +29,21 @@ const GroupsManager: React.FC = () => {
 
   const loadData = async () => {
     try {
-        const [fetchedGroups, fetchedPeople] = await Promise.all([
+        const [fetchedGroups, fetchedPeople, allExpenses] = await Promise.all([
             storage.getGroups(),
-            storage.getPeople()
+            storage.getPeople(),
+            storage.getAllSplitExpenses()
         ]);
         setGroups(fetchedGroups);
         setPeople(fetchedPeople);
+        
+        // Calculate totals
+        const totals: Record<string, number> = {};
+        allExpenses.forEach(exp => {
+            totals[exp.groupId] = (totals[exp.groupId] || 0) + exp.amount;
+        });
+        setGroupTotals(totals);
+
     } catch (e) {
         console.error(e);
         addToast("Failed to load groups", "error");
@@ -47,14 +57,10 @@ const GroupsManager: React.FC = () => {
       if (!groupName) return;
 
       const user = auth.currentUser;
+      const existingGroup = groups.find(g => g.id === editingGroupId);
       let finalMemberIds = [...selectedMembers];
 
       if (!editingGroupId && user) {
-          // Only auto-add 'Me' on creation, not editing (unless logic dictates otherwise)
-          // Actually, preserving 'Me' logic is good, but for edit we typically just modify name/members
-          // For MVP Edit, we will just allow Name change. Member management is complex in "Quick Edit".
-          // Better: Use same logic.
-          
           const mePerson = people.find(p => p.email === user.email || p.name === user.displayName);
           let meId = mePerson ? mePerson.id : '';
           
@@ -111,7 +117,7 @@ const GroupsManager: React.FC = () => {
           id: editingGroupId || crypto.randomUUID(),
           name: groupName,
           currency: existingGroup?.currency || currency,
-          memberIds: finalMemberIds, // Fixed: Use the updated members list
+          memberIds: finalMemberIds,
           createdAt: existingGroup?.createdAt || new Date().toISOString()
       };
 
@@ -199,6 +205,7 @@ const GroupsManager: React.FC = () => {
                             <th className="py-4 pl-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Group Name</th>
                             <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Members</th>
                             <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Created</th>
+                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Total Spent</th>
                             <th className="py-4 pr-6 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -239,8 +246,13 @@ const GroupsManager: React.FC = () => {
                                         {new Date(g.createdAt || Date.now()).toLocaleDateString()}
                                     </span>
                                 </td>
+                                <td className="py-4 text-right">
+                                    <span className="text-sm font-black text-slate-900">
+                                        {formatCurrency(groupTotals[g.id] || 0)}
+                                    </span>
+                                </td>
                                 <td className="py-4 pr-6 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center justify-end gap-2">
                                         <button 
                                             onClick={(e) => openEdit(g, e)}
                                             className="p-2 text-slate-400 hover:text-indigo-600 bg-white border border-slate-200 hover:border-indigo-200 rounded-lg shadow-sm"
@@ -288,21 +300,29 @@ const GroupsManager: React.FC = () => {
                  <label className="label-professional">Select Members</label>
                      <div className="border border-slate-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto custom-scrollbar">
                          {people.length === 0 && <div className="p-4 text-xs text-slate-400 text-center">No friends found. Add friends first!</div>}
-                         {people.map(p => (
+                         {people.map(p => {
+                             const isMe = p.email === auth.currentUser?.email;
+                             const isSelected = selectedMembers.includes(p.id);
+                             return (
                              <div 
                                 key={p.id} 
-                                onClick={() => toggleMember(p.id)}
-                                className={`flex items-center gap-3 p-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors ${selectedMembers.includes(p.id) ? 'bg-indigo-50/50' : ''}`}
+                                onClick={() => !isMe && toggleMember(p.id)}
+                                className={`flex items-center gap-3 p-3 border-b border-slate-50 transition-colors ${isSelected ? 'bg-indigo-50/50' : ''} ${isMe ? 'cursor-not-allowed opacity-80' : 'cursor-pointer hover:bg-slate-50'}`}
                              >
-                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedMembers.includes(p.id) ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'}`}>
-                                     {selectedMembers.includes(p.id) && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
+                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'}`}>
+                                     {isSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
                                  </div>
                                  <div className="flex-1">
-                                     <p className="text-sm font-bold text-slate-900">{p.name}</p>
+                                     <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                         {p.name} 
+                                         {isMe && <span className="bg-indigo-50 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-bold">You</span>}
+                                     </p>
                                      <p className="text-[10px] text-slate-400 font-semibold">{p.email}</p>
                                  </div>
+                                 {isMe && <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded">Owner</span>}
                              </div>
-                         ))}
+                             );
+                         })}
                      </div>
                      <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-wider text-right">
                          {selectedMembers.length} selected

@@ -9,7 +9,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
-import { Account, Category, Expense } from '../types';
+import { Account, Category, Expense, Todo } from '../types';
 import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES } from '../constants';
 
 const handleFirestoreError = (error: any, fallbackValue: any) => {
@@ -231,6 +231,19 @@ export const storage = {
       return allExpenses.filter(e => e.groupId === groupId);
     } catch (error) { return handleFirestoreError(error, []); }
   },
+
+  getAllSplitExpenses: async (): Promise<import('../types').GroupExpense[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/split_expenses`),
+        orderBy('date', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as import('../types').GroupExpense));
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
   saveGroupExpense: async (expense: import('../types').GroupExpense) => {
     const user = auth.currentUser;
     if (!user) return;
@@ -241,6 +254,62 @@ export const storage = {
     const user = auth.currentUser;
     if (!user) return;
     try { await deleteDoc(doc(db, `users/${user.uid}/split_expenses`, id)); }
+    catch (error) { handleFirestoreError(error, null); }
+  },
+
+  // --- Todo Module ---
+  getTodos: async (): Promise<Todo[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/todos`),
+        orderBy('createdAt', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Todo));
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
+
+  saveTodo: async (todo: Todo) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await setDoc(doc(db, `users/${user.uid}/todos`, todo.id), todo); }
+    catch (error) { handleFirestoreError(error, null); }
+  },
+
+  deleteTodo: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await deleteDoc(doc(db, `users/${user.uid}/todos`, id)); }
+    catch (error) { handleFirestoreError(error, null); }
+  },
+
+  // --- Planned Expenses Module ---
+  getPlannedExpenses: async (): Promise<import('../types').PlannedExpense[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/planned_expenses`),
+        orderBy('dueDate', 'asc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as import('../types').PlannedExpense));
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
+
+  savePlannedExpense: async (expense: import('../types').PlannedExpense) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await setDoc(doc(db, `users/${user.uid}/planned_expenses`, expense.id), expense); }
+    catch (error) { handleFirestoreError(error, null); }
+  },
+
+  deletePlannedExpense: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try { await deleteDoc(doc(db, `users/${user.uid}/planned_expenses`, id)); }
     catch (error) { handleFirestoreError(error, null); }
   }
 };
