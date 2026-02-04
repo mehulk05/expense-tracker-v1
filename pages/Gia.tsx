@@ -606,88 +606,94 @@ const GiaImprovedUX = () => {
   // DASHBOARD
   // DASHBOARD
   const Dashboard = () => (
-    <div className="space-y-8">
-        {/* Hero Section */}
-        <div className="text-center py-8 px-4">
-           {/* Status Badge */}
-           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold mb-6 animate-fade-in-up">
-              <CheckCircle className="w-4 h-4" />
-              GIA Configuration Ready
+    <div className="space-y-6">
+        {/* Compact Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2 border-b border-gray-100 pb-6">
+           <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">GIA Assistant</h1>
+                <div className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold flex items-center gap-1.5">
+                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                   Active
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 max-w-2xl leading-relaxed">
+                Automating patient communication, answering questions, and converting leads 24/7.
+              </p>
            </div>
-
-           <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Zap className="w-8 h-8 text-blue-600" />
-           </div>
-           <h1 className="text-3xl font-extrabold text-gray-900 mb-4 tracking-tight">Meet GIA, Your AI Assistant</h1>
-           <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8 leading-relaxed">
-             Gia automates patient communication, answers questions instantly, and converts leads into bookings—24/7, without skipping a beat.
-           </p>
+           
            <button 
              onClick={() => setActiveTopTab('configuration')}
-             className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-bold shadow-lg shadow-blue-200 flex items-center gap-2 mx-auto"
+             className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-bold shadow-sm shadow-blue-200 flex items-center gap-2 text-sm whitespace-nowrap"
            >
-             {isEditMode ? 'Manage Configuration' : 'Get Started'}
-             <ChevronRight className="w-4 h-4" />
+             {isEditMode ? 'Manage Configuration' : 'Setup GIA'}
+             <Settings className="w-4 h-4" />
            </button>
         </div>
 
         {/* Improvement Suggestions - Only in Edit Mode */}
         {isEditMode && (
            <div className="animate-fade-in-up">
-              <div className="flex items-center gap-4 mb-6">
-                 <h2 className="text-lg font-bold text-gray-900">Ways to Improve GIA</h2>
-                 <div className="h-px bg-gray-200 flex-1"></div>
+              <div className="flex items-center justify-between mb-4">
+                 <h2 className="text-base font-bold text-gray-900">Optimization Checklist</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  {/* Upload Documents */}
                  <div 
                     onClick={() => openConfigDrawer('training')}
-                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group"
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group flex flex-col gap-4"
                  >
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-600 transition-colors">
-                       <Upload className="w-5 h-5 text-blue-600 group-hover:text-white" />
+                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 group-hover:bg-blue-600 transition-colors">
+                       <Upload className="w-6 h-6 text-blue-600 group-hover:text-white" />
                     </div>
-                    <h3 className="font-bold text-gray-900 mb-1">Expand Knowledge Base</h3>
-                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                       Upload more relevant documents such as clinic policies, service menus, and pricing guides.
-                    </p>
-                    <span className="text-xs font-bold text-blue-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                       Upload Files <ArrowRight className="w-3 h-3" />
-                    </span>
+                    <div>
+                       <h3 className="font-bold text-gray-900 text-base mb-2">Expand Knowledge Base</h3>
+                       <p className="text-sm text-gray-500 mb-4 leading-relaxed group-hover:text-gray-600">
+                          Teach Gia about your specific clinic policies, treatment guidelines, and pricing. The more documents you upload, the more accurate and helpful her answers will be for your patients.
+                       </p>
+                       <span className="text-xs font-bold text-blue-700 uppercase tracking-wide flex items-center gap-1 group-hover:gap-2 transition-all">
+                          Upload Documents <ArrowRight className="w-3 h-3" />
+                       </span>
+                    </div>
                  </div>
 
                  {/* Refine Answers */}
                  <div 
                     onClick={() => openConfigDrawer('faqs')}
-                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group"
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-indigo-400 hover:shadow-md transition-all cursor-pointer group flex flex-col gap-4"
                  >
-                    <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mb-3 group-hover:bg-indigo-600 transition-colors">
-                       <MessageSquare className="w-5 h-5 text-indigo-600 group-hover:text-white" />
+                    <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100 group-hover:bg-indigo-600 transition-colors">
+                       <MessageSquare className="w-6 h-6 text-indigo-600 group-hover:text-white" />
                     </div>
-                    <h3 className="font-bold text-gray-900 mb-1">Refine Answers</h3>
-                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                       Review recent answers and provide feedback or add new Q&As to improve accuracy.
-                    </p>
-                    <span className="text-xs font-bold text-indigo-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                       Manage Q&A <ArrowRight className="w-3 h-3" />
-                    </span>
+                    <div>
+                       <h3 className="font-bold text-gray-900 text-base mb-2">Refine Answers</h3>
+                       <p className="text-sm text-gray-500 mb-4 leading-relaxed group-hover:text-gray-600">
+                          Review standard questions and fine-tune Gia's responses. You can add specific Q&A pairs to ensure she answers exactly how you want for common inquiries.
+                       </p>
+                       <span className="text-xs font-bold text-indigo-700 uppercase tracking-wide flex items-center gap-1 group-hover:gap-2 transition-all">
+                          Manage Q&A <ArrowRight className="w-3 h-3" />
+                       </span>
+                    </div>
                  </div>
 
-                 {/* Check Analytics */}
+                 {/* Booking Config */}
                  <div 
-                    onClick={() => setActiveTopTab('analytics')}
-                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group"
+                    onClick={() => openConfigDrawer('booking')}
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-emerald-400 hover:shadow-md transition-all cursor-pointer group flex flex-col gap-4"
                  >
-                    <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mb-3 group-hover:bg-purple-600 transition-colors">
-                       <BarChart3 className="w-5 h-5 text-purple-600 group-hover:text-white" />
+                     <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100 group-hover:bg-emerald-600 transition-colors">
+                       <Calendar className="w-6 h-6 text-emerald-600 group-hover:text-white" />
                     </div>
-                    <h3 className="font-bold text-gray-900 mb-1">Check Performance</h3>
-                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                       See how GIA is performing with patients and identify areas for improvement.
-                    </p>
-                    <span className="text-xs font-bold text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                       View Analytics <ArrowRight className="w-3 h-3" />
-                    </span>
+                    <div>
+                        <h3 className="font-bold text-gray-900 text-base mb-2">Booking Settings</h3>
+                        <p className="text-sm text-gray-500 mb-4 leading-relaxed group-hover:text-gray-600">
+                           Configure how Gia handles appointment requests. You can set her to provide direct booking links or to take down details for your staff to follow up.
+                        </p>
+                        <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide flex items-center gap-1 group-hover:gap-2 transition-all">
+                           Configure Booking <ArrowRight className="w-3 h-3" />
+                        </span>
+                    </div>
                  </div>
               </div>
            </div>
@@ -695,49 +701,49 @@ const GiaImprovedUX = () => {
 
         {/* Features Capabilities */}
         <div>
-          <div className="flex items-center gap-4 mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Core Capabilities</h2>
-            <div className="h-px bg-gray-200 flex-1"></div>
+          <div className="flex items-center gap-4 mb-4">
+            <h2 className="text-base font-bold text-gray-900">Core Capabilities</h2>
+            <div className="h-px bg-gray-100 flex-1"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
-               <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
-                  <Clock className="w-5 h-5 text-indigo-600" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-all">
+               <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center mb-3">
+                  <Clock className="w-4 h-4 text-indigo-600" />
                </div>
-               <h3 className="text-base font-bold text-gray-900 mb-2">Always Available</h3>
-               <p className="text-sm text-gray-500 leading-relaxed">
-                 Gia responds instantly to every text, email, and Instagram message—day or night, weekends and holidays included.
+               <h3 className="text-sm font-bold text-gray-900 mb-1">Always Available</h3>
+               <p className="text-xs text-gray-500 leading-relaxed">
+                 Responds 24/7 to all messages instantly.
                </p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
-               <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
-                  <Lightbulb className="w-5 h-5 text-emerald-600" />
+            <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-all">
+               <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center mb-3">
+                  <Lightbulb className="w-4 h-4 text-emerald-600" />
                </div>
-               <h3 className="text-base font-bold text-gray-900 mb-2">Smart from Day One</h3>
-               <p className="text-sm text-gray-500 leading-relaxed">
-                 She already knows your practice inside and out, trained on your website content and conversation history to provide accurate responses.
+               <h3 className="text-sm font-bold text-gray-900 mb-1">Smart Context</h3>
+               <p className="text-xs text-gray-500 leading-relaxed">
+                 Trained on your specific content.
                </p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
-               <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
-                  <MessageSquare className="w-5 h-5 text-blue-600" />
+            <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-all">
+               <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center mb-3">
+                  <MessageSquare className="w-4 h-4 text-blue-600" />
                </div>
-               <h3 className="text-base font-bold text-gray-900 mb-2">Seamless Collaboration</h3>
-               <p className="text-sm text-gray-500 leading-relaxed">
-                 When a conversation needs a human touch, Gia smoothly hands off to your staff right within your Growth99 Inbox.
+               <h3 className="text-sm font-bold text-gray-900 mb-1">Seamless Handoff</h3>
+               <p className="text-xs text-gray-500 leading-relaxed">
+                 Hands off to staff when needed.
                </p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
-               <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors">
-                  <TrendingUp className="w-5 h-5 text-purple-600" />
+            <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-all">
+               <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center mb-3">
+                  <TrendingUp className="w-4 h-4 text-purple-600" />
                </div>
-               <h3 className="text-base font-bold text-gray-900 mb-2">Converts to Action</h3>
-               <p className="text-sm text-gray-500 leading-relaxed">
-                 Gia naturally gathers contact details during conversations and shares relevant booking information with prospects at just the right moment.
+               <h3 className="text-sm font-bold text-gray-900 mb-1">Conversion Focus</h3>
+               <p className="text-xs text-gray-500 leading-relaxed">
+                 Turns conversations into bookings.
                </p>
             </div>
           </div>
@@ -1584,7 +1590,7 @@ const GiaImprovedUX = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-white overflow-hidden">
       {/* Sidenav */}
       <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${sidenavExpanded ? 'w-64' : 'w-16'}`}>
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
