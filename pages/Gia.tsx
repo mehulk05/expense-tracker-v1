@@ -1079,118 +1079,163 @@ const GiaImprovedUX = () => {
     // Or better, let's just stick to the specific email/sms breakdown and the total counts.
     const avgQualityScore = ((smsData.qualityScore + emailData.qualityScore) / 2).toFixed(1);
 
+    const [activeAnalyticsTab, setActiveAnalyticsTab] = useState('feedback');
+
     return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-        <p className="text-gray-600 mt-1">Performance insights and metrics</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Responses', value: totalResponses.toString(), icon: MessageSquare },
-          { label: 'Avg Quality Score', value: `${avgQualityScore}%`, icon: TrendingUp },
-          { label: 'Positive Feedback', value: `${totalThumbsUp}`, icon: CheckCircle },
-          { label: 'Negative Feedback', value: `${totalThumbsDown}`, icon: AlertCircle }
-        ].map((metric, idx) => (
-          <div key={idx} className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                <metric.icon className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 mb-1">{metric.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Feedback Analytics with Separate Cards */}
-      <div className="space-y-6">
-          <div className="mb-2">
-            <h3 className="text-lg font-bold text-gray-900">Feedback Analytics</h3>
-            <p className="text-sm text-gray-500">Detailed breakdown of interactions by channel</p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <AnalyticsCard 
-              title="Aggregated Analytics" 
-              icon={BarChart3} 
-              iconColor="text-emerald-600" 
-              iconBg="bg-emerald-50"
-              data={{
-                totalResponses,
-                aiResponseRate: ((smsData.aiResponseRate + emailData.aiResponseRate) / 2).toFixed(2), // Simple average for now
-                feedbackRate: ((smsData.feedbackRate + emailData.feedbackRate) / 2).toFixed(2),
-                qualityScore: avgQualityScore,
-                awaitedFeedback: smsData.awaitedFeedback + emailData.awaitedFeedback,
-                thumbsUp: totalThumbsUp,
-                thumbsDown: totalThumbsDown
-              }}
-            />
-             <AnalyticsCard 
-              title="Email Analytics" 
-              icon={Mail} 
-              iconColor="text-blue-600" 
-              iconBg="bg-blue-50"
-              data={emailData}
-            />
-             <AnalyticsCard 
-              title="SMS Analytics" 
-              icon={Smartphone} 
-              iconColor="text-purple-600" 
-              iconBg="bg-purple-50"
-              data={smsData}
-            />
-          </div>
-      </div>
-
-      {/* Source Analytics (Moved) */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">Source Analytics</h3>
-            <p className="text-sm text-gray-500">6 total sources powering Gia's responses</p>
-          </div>
-          <div className="flex items-center gap-4 text-xs font-medium">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="text-gray-700">5 Active</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              <span className="text-gray-700">1 Inactive</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              <span className="text-gray-700">109 Largest</span>
-            </div>
-          </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+          <p className="text-gray-600 mt-1">Performance insights and metrics</p>
         </div>
 
-        <div className="space-y-3">
+        <div className="flex bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveAnalyticsTab('feedback')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              activeAnalyticsTab === 'feedback'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            Feedback Analytics
+          </button>
+          <button
+            onClick={() => setActiveAnalyticsTab('source')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              activeAnalyticsTab === 'source'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            Source Analytics
+          </button>
+        </div>
+      </div>
+
+      {activeAnalyticsTab === 'feedback' && (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { name: 'Global FAQ', count: '3 Items Added', icon: Globe, color: 'blue' },
-            { name: 'FAQ', count: '7 Items Added', icon: HelpCircle, color: 'purple' },
-            { name: 'Live Website Data', count: '4 Items Added', icon: Monitor, color: 'cyan' },
-            { name: 'User Knowledge Base', count: 'No Items Added', icon: BookOpen, color: 'gray' },
-            { name: 'Gia Feedback / Input', count: '79 Items Added', icon: MessageSquare, color: 'emerald' },
-            { name: 'Business Config / Contact Conversion', count: '109 Items Added', icon: LayoutGrid, color: 'lime' }
-          ].map((source, idx) => (
-            <div key={idx} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-lg hover:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-${source.color}-50 text-${source.color}-600`}>
-                  <source.icon className="w-5 h-5" />
+            { label: 'Total Responses', value: totalResponses.toString(), icon: MessageSquare },
+            { label: 'Avg Quality Score', value: `${avgQualityScore}%`, icon: TrendingUp },
+            { label: 'Positive Feedback', value: `${totalThumbsUp}`, icon: CheckCircle },
+            { label: 'Negative Feedback', value: `${totalThumbsDown}`, icon: AlertCircle }
+          ].map((metric, idx) => (
+            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <metric.icon className="w-5 h-5 text-blue-600" />
                 </div>
-                <span className="font-bold text-sm text-gray-900">{source.name}</span>
               </div>
-              <span className={`text-xs font-bold ${source.count.includes('No') ? 'text-gray-400' : 'text-gray-900'}`}>
-                {source.count}
-              </span>
+              <p className="text-sm text-gray-600 mb-1">{metric.label}</p>
+              <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-6">
+            <div className="mb-2">
+              <h3 className="text-lg font-bold text-gray-900">Feedback Breakdown</h3>
+              <p className="text-sm text-gray-500">Detailed breakdown of interactions by channel</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <AnalyticsCard 
+                title="Aggregated Analytics" 
+                icon={BarChart3} 
+                iconColor="text-emerald-600" 
+                iconBg="bg-emerald-50"
+                data={{
+                  totalResponses,
+                  aiResponseRate: ((smsData.aiResponseRate + emailData.aiResponseRate) / 2).toFixed(2), // Simple average for now
+                  feedbackRate: ((smsData.feedbackRate + emailData.feedbackRate) / 2).toFixed(2),
+                  qualityScore: avgQualityScore,
+                  awaitedFeedback: smsData.awaitedFeedback + emailData.awaitedFeedback,
+                  thumbsUp: totalThumbsUp,
+                  thumbsDown: totalThumbsDown
+                }}
+              />
+              <AnalyticsCard 
+                title="Email Analytics" 
+                icon={Mail} 
+                iconColor="text-blue-600" 
+                iconBg="bg-blue-50"
+                data={emailData}
+              />
+              <AnalyticsCard 
+                title="SMS Analytics" 
+                icon={Smartphone} 
+                iconColor="text-purple-600" 
+                iconBg="bg-purple-50"
+                data={smsData}
+              />
+            </div>
+        </div>
+      </div>
+      )}
+
+      {/* Source Analytics (Moved) */}
+      {/* Source Analytics - Redesigned */}
+      {/* Source Analytics - Redesigned */}
+      {activeAnalyticsTab === 'source' && (
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div>
+             <h3 className="text-lg font-bold text-gray-900">Source Analytics</h3>
+             <p className="text-sm text-gray-500 mt-1 max-w-2xl">
+               Monitor the data sources that power GIA's intelligence. These sources are continuously indexed to provide accurate and relevant responses to patient inquiries.
+             </p>
+          </div>
+           <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-100">
+             <div className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-100 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="text-xs font-bold text-gray-700">5 Active</span>
+             </div>
+             <div className="px-3 py-1 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+                <span className="text-xs font-medium text-gray-500">1 Inactive</span>
+             </div>
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { name: 'Global FAQ', count: '3 Items', icon: Globe, color: 'blue', status: 'Active', description: 'Universal questions applicable to all accounts' },
+            { name: 'FAQ', count: '7 Items', icon: HelpCircle, color: 'purple', status: 'Active', description: 'Custom questions specific to your practice' },
+            { name: 'Live Website Data', count: '4 Items', icon: Monitor, color: 'cyan', status: 'Active', description: 'Real-time content indexed from your website' },
+            { name: 'User Knowledge Base', count: '0 Items', icon: BookOpen, color: 'gray', status: 'Inactive', description: 'Custom uploaded documents and files' },
+            { name: 'Gia Feedback & Input', count: '79 Items', icon: MessageSquare, color: 'emerald', status: 'Active', description: 'Learnings from corrected AI responses' },
+            { name: 'Business Config', count: '109 Items', icon: LayoutGrid, color: 'indigo', status: 'Active', description: 'Settings from your business profile' }
+          ].map((source, idx) => (
+            <div key={idx} className="group flex items-start gap-4 p-5 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all">
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-${source.color}-50 group-hover:bg-${source.color}-100 transition-colors`}>
+                <source.icon className={`w-6 h-6 text-${source.color}-600`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                   <h4 className="font-bold text-gray-900 text-sm truncate pr-2">{source.name}</h4>
+                   {source.status === 'Active' ? (
+                     <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" title="Active"></div>
+                   ) : (
+                      <div className="w-2 h-2 rounded-full bg-gray-300 flex-shrink-0" title="Inactive"></div>
+                   )}
+                </div>
+                <p className="text-xs text-gray-500 mb-3 line-clamp-2 min-h-[2.5em]">{source.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm font-bold ${source.count.startsWith('0') ? 'text-gray-400' : 'text-gray-900'}`}>
+                    {source.count}
+                  </span>
+                  <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                    View
+                  </span>
+                </div>
+              </div>
             </div>
           ))}
         </div>
       </div>
+      )}
     </div>
     );
   };
