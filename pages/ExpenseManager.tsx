@@ -54,6 +54,48 @@ const ExpenseManager: React.FC = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  // --- METRICS CALCULATION ---
+  const metrics = React.useMemo(() => {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+
+      let yearTotal = 0;
+      let monthTotal = 0;
+      let creditTotal = 0;
+      let debitTotal = 0;
+      let cashTotal = 0;
+      let upiTotal = 0;
+      let personalTotal = 0;
+      let externalTotal = 0;
+
+      expenses.forEach(e => {
+          const d = new Date(e.date);
+          const isYear = d.getFullYear() === currentYear;
+          const isMonth = isYear && d.getMonth() === currentMonth;
+
+          if (isYear) {
+              yearTotal += e.amount;
+              if (isMonth) monthTotal += e.amount;
+
+              if (e.personalExpense ?? true) {
+                  personalTotal += e.amount;
+              } else {
+                  externalTotal += e.amount;
+              }
+              
+              const method = accounts.find(a => a.id === e.accountId)?.type || e.paymentMethod;
+              if (method === 'credit') creditTotal += e.amount;
+              else if (method === 'debit') debitTotal += e.amount;
+              else if (method === 'cash') cashTotal += e.amount;
+              else if (method === 'upi') upiTotal += e.amount;
+          }
+      });
+
+      return { yearTotal, monthTotal, creditTotal, debitTotal, cashTotal, upiTotal, personalTotal, externalTotal };
+  }, [expenses, accounts]);
+
+
   // Update account selection when payment method changes
   useEffect(() => {
     const filteredAccounts = accounts.filter(acc => acc.type === paymentMethod);
@@ -206,6 +248,17 @@ const ExpenseManager: React.FC = () => {
     }
   };
 
+  // Helper to get payment badge style
+  const getPaymentParams = (method: string) => {
+      switch(method?.toLowerCase()) {
+          case 'upi': return { label: 'UPI', style: 'bg-orange-50 text-orange-600 border-orange-100' };
+          case 'credit': return { label: 'Credit Card', style: 'bg-indigo-50 text-indigo-600 border-indigo-100' };
+          case 'debit': return { label: 'Debit Card', style: 'bg-violet-50 text-violet-600 border-violet-100' };
+          case 'cash': return { label: 'Cash', style: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+          default: return { label: method || 'Other', style: 'bg-slate-50 text-slate-500 border-slate-200' };
+      }
+  };
+
   const filteredExpenses = expenses.filter(exp => {
     // 1. Filter by Personal/Other
     if (filter !== 'all') {
@@ -263,6 +316,55 @@ const ExpenseManager: React.FC = () => {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500">
+      
+      {/* SECTION 1: OVERVIEW METRICS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Spent This Year</p>
+              <p className="text-2xl font-black text-slate-900">{formatCurrency(metrics.yearTotal)}</p>
+          </div>
+          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Spent This Month</p>
+              <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-black text-slate-900">{formatCurrency(metrics.monthTotal)}</p>
+                  <span className="text-[10px] font-bold text-slate-400">
+                      {((metrics.monthTotal / (metrics.yearTotal || 1)) * 100).toFixed(0)}% of year
+                  </span>
+              </div>
+          </div>
+          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Personal Spend (Year)</p>
+              <p className="text-2xl font-black text-indigo-600">{formatCurrency(metrics.personalTotal)}</p>
+          </div>
+          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">External Spend (Year)</p>
+              <p className="text-2xl font-black text-slate-900">{formatCurrency(metrics.externalTotal)}</p>
+          </div>
+      </div>
+      
+      {/* SECTION 2: PAYMENT BREAKDOWN */}
+      <div>
+         <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 px-2">Payment Breakdown</h3>
+         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-orange-500">
+                <p className="text-orange-600 text-[10px] font-black uppercase tracking-widest mb-1">UPI</p>
+                <p className="text-xl font-black text-slate-900">{formatCurrency(metrics.upiTotal)}</p>
+            </div>
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
+                <p className="text-indigo-600 text-[10px] font-black uppercase tracking-widest mb-1">Credit Card</p>
+                <p className="text-xl font-black text-slate-900">{formatCurrency(metrics.creditTotal)}</p>
+            </div>
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-violet-500">
+                <p className="text-violet-600 text-[10px] font-black uppercase tracking-widest mb-1">Debit Card</p>
+                <p className="text-xl font-black text-slate-900">{formatCurrency(metrics.debitTotal)}</p>
+            </div>
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+                <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-1">Cash</p>
+                <p className="text-xl font-black text-slate-900">{formatCurrency(metrics.cashTotal)}</p>
+            </div>
+         </div>
+      </div>
+
       {/* Ledger Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
         <div>
@@ -481,6 +583,7 @@ const ExpenseManager: React.FC = () => {
               ) : (
                 paginatedExpenses.map((exp) => {
                   const expIsPersonal = exp.personalExpense ?? true;
+                  const paymentParams = getPaymentParams(accounts.find(a => a.id === exp.accountId)?.type || exp.paymentMethod);
                   return (
                     <tr key={exp.id} className={`hover:bg-indigo-50/20 transition-all group ${selectedIds.has(exp.id) ? 'bg-indigo-50/40' : ''}`}>
                       <td className="pl-6">
@@ -497,15 +600,15 @@ const ExpenseManager: React.FC = () => {
                       <td>
                         <span className={`text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border transition-all ${
                           expIsPersonal 
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100' 
-                            : 'bg-white text-slate-500 border-slate-300'
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-100' 
+                            : 'bg-slate-50 text-slate-600 border-slate-200'
                         }`}>
                           {expIsPersonal ? 'Personal' : 'External'}
                         </span>
                       </td>
                        <td>
-                        <span className="text-[9px] font-black px-3 py-1 rounded-md uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
-                          {accounts.find(a => a.id === exp.accountId)?.type || exp.paymentMethod}
+                        <span className={`text-[9px] font-black px-3 py-1 rounded-md uppercase tracking-widest border ${paymentParams.style}`}>
+                          {paymentParams.label}
                         </span>
                       </td>
                       <td>

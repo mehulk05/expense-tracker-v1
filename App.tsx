@@ -19,6 +19,7 @@ import PlannedExpensesApp from './pages/planned/PlannedExpensesApp';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import GiaImprovedUX from './pages/Gia';
 
 const App: React.FC = () => {
   return (
@@ -27,6 +28,7 @@ const App: React.FC = () => {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/gia" element={<GiaImprovedUX />} />
           <Route 
             path="/" 
             element={

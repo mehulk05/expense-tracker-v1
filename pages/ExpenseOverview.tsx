@@ -4,7 +4,12 @@ import { storage } from '../services/storage';
 import { Expense, Category, Account } from '../types';
 import { formatCurrency } from '../utils/currency';
 import { Link } from 'react-router-dom';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { 
+    ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Cell, 
+    PieChart, Pie, Legend, AreaChart, Area
+} from 'recharts';
+
+type TimeRange = 'this-month' | 'last-month' | 'this-year' | 'all-time';
 
 const ExpenseOverview: React.FC = () => {
     const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -12,9 +17,9 @@ const ExpenseOverview: React.FC = () => {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     
-    // View Toggle State: 'month' (Current Month) vs 'total' (Lifetime)
-    const [viewMode, setViewMode] = useState<'month' | 'total'>('month');
+    const [timeRange, setTimeRange] = useState<TimeRange>('this-month');
 
+    // Load Data
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -35,431 +40,669 @@ const ExpenseOverview: React.FC = () => {
         loadData();
     }, []);
 
-    const metrics = useMemo(() => {
+    // Core Analytics Logic
+    const analytics = useMemo(() => {
         const now = new Date();
-        const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
         
-        // Helper to get dates for comparison
-        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastMonth = lastMonthDate.getMonth();
-        const lastMonthYear = lastMonthDate.getFullYear();
+        let filteredExpenses: Expense[] = [];
+        let previousExpenses: Expense[] = []; // For comparison
+        let rangeLabel = '';
+        let daysInPeriod = 1;
 
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const currentMonthName = `${monthNames[currentMonth]} ${currentYear}`;
-        const lastMonthName = `${monthNames[lastMonth]} ${lastMonthYear}`;
-        const shortCurr = monthNames[currentMonth];
-        const shortLast = monthNames[lastMonth];
-
-        // 1. Filter Expenses
-        const monthlyExpenses = expenses.filter(e => {
-            const d = new Date(e.date);
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
-
-        const lastMonthExpenses = expenses.filter(e => {
-            const d = new Date(e.date);
-            return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
-        });
-
-        // 2. Base Totals
-        const totalSpentMonth = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
-        const totalSpentLifetime = expenses.reduce((sum, e) => sum + e.amount, 0);
-        const totalSpentLastMonth = lastMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+        // 1. Filter Logic
+        if (timeRange === 'this-month') {
+            filteredExpenses = expenses.filter(e => {
+                const d = new Date(e.date);
+                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+            });
+            previousExpenses = expenses.filter(e => {
+                const d = new Date(e.date);
+                // Handle Jan -> Dec previous year
+                if (currentMonth === 0) return d.getFullYear() === currentYear - 1 && d.getMonth() === 11;
+                return d.getFullYear() === currentYear && d.getMonth() === currentMonth - 1;
+            });
+            rangeLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
+            daysInPeriod = Math.min(new Date(currentYear, currentMonth + 1, 0).getDate(), now.getDate());
         
-        const momChange = totalSpentLastMonth > 0 
-            ? ((totalSpentMonth - totalSpentLastMonth) / totalSpentLastMonth) * 100 
-            : 0;
-
-        // 3. Selection based on ViewMode
-        const displayedTotalSpent = viewMode === 'month' ? totalSpentMonth : totalSpentLifetime;
-        const displayedExpenses = viewMode === 'month' ? monthlyExpenses : expenses;
-
-        // 4. Budget Logic
-        const totalBudget = categories.reduce((sum, c) => {
-             return sum + (c.budgetFrequency === 'yearly' ? (c.budget || 0) / 12 : (c.budget || 0));
-        }, 0);
-        const remainingBudget = Math.max(0, totalBudget - totalSpentMonth);
-        const budgetHealth = totalBudget > 0 ? (totalSpentMonth / totalBudget) * 100 : 0;
-
-        // 5. Category Breakdown (SHOW ALL, sorted by spend)
-        const categoryStats = categories.map(c => {
-            const relevantExpenses = viewMode === 'month' ? monthlyExpenses : expenses;
-            const spent = relevantExpenses
-                .filter(e => e.categoryId === c.id)
-                .reduce((sum, e) => sum + e.amount, 0);
+        } else if (timeRange === 'last-month') {
+            const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+            const lmYear = lastMonthDate.getFullYear();
+            const lmMonth = lastMonthDate.getMonth();
             
-            const totalForCalc = viewMode === 'month' ? totalSpentMonth : totalSpentLifetime;
-            const percentage = totalForCalc > 0 ? (spent / totalForCalc) * 100 : 0;
-            return { ...c, spent, percentage };
-        })
-        .sort((a,b) => b.spent - a.spent);
+            filteredExpenses = expenses.filter(e => {
+                const d = new Date(e.date);
+                return d.getFullYear() === lmYear && d.getMonth() === lmMonth;
+            });
+            previousExpenses = expenses.filter(e => {
+                const d = new Date(e.date);
+                const prevPrevDate = new Date(lmYear, lmMonth - 1, 1);
+                return d.getFullYear() === prevPrevDate.getFullYear() && d.getMonth() === prevPrevDate.getMonth();
+            });
+            rangeLabel = lastMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
+            daysInPeriod = new Date(lmYear, lmMonth + 1, 0).getDate();
 
-        // Chart Data for Categories
-        const categoryChartData = categoryStats
-            .filter(c => c.spent > 0)
-            .map(c => ({ name: c.name, value: c.spent }));
+        } else if (timeRange === 'this-year') {
+            filteredExpenses = expenses.filter(e => new Date(e.date).getFullYear() === currentYear);
+            previousExpenses = expenses.filter(e => new Date(e.date).getFullYear() === currentYear - 1);
+            rangeLabel = `${currentYear} ANALYTICS`;
+            daysInPeriod = (now.getTime() - new Date(currentYear, 0, 1).getTime()) / (1000 * 3600 * 24);
 
-        // 6. Monthly Comparison List
-        const comparisonList = categories.map(c => {
-            const thisMonth = monthlyExpenses
+        } else { // all-time
+            filteredExpenses = expenses;
+            previousExpenses = []; // No comparison for all time
+            rangeLabel = 'LIFETIME OVERVIEW';
+            daysInPeriod = 1; // Not relevant for daily avg usually
+        }
+
+        // 2. Metrics Calculation
+        const totalSpent = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const prevSpent = previousExpenses.reduce((sum, e) => sum + e.amount, 0);
+        
+        const changePercent = prevSpent > 0 ? ((totalSpent - prevSpent) / prevSpent) * 100 : 0;
+        
+        const avgTransaction = filteredExpenses.length > 0 ? totalSpent / filteredExpenses.length : 0;
+        
+        // Daily/Monthly Avg
+        let avgPerUnit = 0;
+        let avgLabel = '';
+        if (timeRange.includes('month')) {
+            avgPerUnit = totalSpent / daysInPeriod;
+            avgLabel = 'per day';
+        } else if (timeRange === 'this-year') {
+            avgPerUnit = totalSpent / (currentMonth + 1);
+            avgLabel = 'per month';
+        } else {
+            // Lifetime avg per month (approx)
+            const firstDate = expenses.length > 0 ? new Date(Math.min(...expenses.map(e => new Date(e.date).getTime()))) : new Date();
+            const monthsDiff = (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth()) + 1;
+            avgPerUnit = totalSpent / Math.max(1, monthsDiff);
+            avgLabel = 'per month';
+        }
+
+        // --- BUDGET LOGIC ---
+        // Calculate Total Budget based on Time Range
+        const categoryBudgets = categories.map(c => {
+            let limit = 0;
+            if (c.budget && c.budget > 0) {
+                if (timeRange.includes('month')) {
+                    limit = c.budgetFrequency === 'yearly' ? c.budget / 12 : c.budget;
+                } else if (timeRange === 'this-year') {
+                    limit = c.budgetFrequency === 'yearly' ? c.budget : c.budget * 12;
+                } else {
+                    limit = 0; 
+                }
+            }
+            return { id: c.id, name: c.name, limit };
+        });
+
+        // Budget Calculations
+        const totalBudget = categoryBudgets.reduce((sum, cb) => sum + cb.limit, 0);
+        const remainingBudget = totalBudget - totalSpent;
+        const budgetHealth = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+
+        // Projections & Time
+        let daysLeft = 0;
+        let projectedTotal = 0;
+        if (timeRange === 'this-month') {
+             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+             daysLeft = daysInMonth - now.getDate();
+             const daysPassed = Math.max(1, now.getDate());
+             projectedTotal = (totalSpent / daysPassed) * daysInMonth;
+        } else if (timeRange === 'this-year') {
+             const start = new Date(currentYear, 0, 1);
+             const diff = now.getTime() - start.getTime();
+             const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+             const daysInYear = 365 + (currentYear % 4 === 0 ? 1 : 0);
+             daysLeft = daysInYear - dayOfYear;
+             projectedTotal = (totalSpent / Math.max(1, dayOfYear)) * daysInYear;
+        }
+
+        // Category Budget Performance & Status Logic
+        const categoryPerf = categories.map(c => {
+            const spent = filteredExpenses
                 .filter(e => e.categoryId === c.id)
                 .reduce((sum, e) => sum + e.amount, 0);
-            const lastVal = lastMonthExpenses
-                .filter(e => e.categoryId === c.id)
-                .reduce((sum, e) => sum + e.amount, 0);
-            return { name: c.name, thisMonth, lastVal, diff: thisMonth - lastVal };
-        }).sort((a,b) => b.thisMonth - a.thisMonth);
+            const budget = categoryBudgets.find(cb => cb.id === c.id)?.limit || 0;
+            const percent = budget > 0 ? (spent / budget) * 100 : 0;
+            
+            // Status Thresholds
+            let status: 'safe' | 'warning' | 'alert' | 'critical' | 'no-budget' = 'no-budget';
+            if (budget > 0) {
+                if (percent > 100) status = 'critical';       // > 100% (Red)
+                else if (percent >= 90) status = 'alert';     // 90-100% (Orange)
+                else if (percent >= 70) status = 'warning';   // 70-90% (Yellow)
+                else status = 'safe';                         // < 70% (Green)
+            }
 
-        // 7. Payment Trends (SHOW ALL types)
-        const definedMethods = ['cash', 'upi', 'credit', 'debit'];
-        const paymentStatsRaw = displayedExpenses.reduce((acc, curr) => {
-            const type = curr.paymentMethod || 'other';
-            acc[type] = (acc[type] || 0) + curr.amount;
-            return acc;
-        }, {} as Record<string, number>);
-
-        const paymentData = definedMethods.map(methodKey => {
-            const val = paymentStatsRaw[methodKey] || 0;
             return {
-                name: methodKey === 'credit' ? 'Credit Card' : methodKey === 'upi' ? 'UPI' : methodKey === 'debit' ? 'Debit Card' : 'Cash',
-                value: val,
-                percentage: displayedTotalSpent > 0 ? (val / displayedTotalSpent) * 100 : 0,
-                colorKey: methodKey
+                ...c,
+                spent,
+                budget,
+                status,
+                percent,
+                remaining: Math.max(0, budget - spent)
             };
-        }).sort((a,b) => b.value - a.value);
+        }).sort((a,b) => b.spent - a.spent);
 
-        // Daily Average
-        const dailyAverage = totalSpentMonth / Math.min(new Date(currentYear, currentMonth + 1, 0).getDate(), new Date().getDate());
+        // --- ALERTS GENERATION ---
+        const alerts: { type: 'critical' | 'warning' | 'info', text: string, categoryId?: string }[] = [];
+        
+        // Critical: Over Budget Categories
+        const overBudgetCats = categoryPerf.filter(c => c.status === 'critical');
+        if (overBudgetCats.length > 0) {
+            alerts.push({
+                type: 'critical',
+                text: `${overBudgetCats.length} categories exceeded budget`
+            });
+            overBudgetCats.slice(0, 3).forEach(c => {
+                alerts.push({
+                    type: 'critical',
+                    text: `${c.name}: Over by ${formatCurrency(c.spent - c.budget)}`
+                });
+            });
+        }
+        
+        if (totalBudget > 0 && totalSpent > totalBudget) {
+            alerts.unshift({
+                type: 'critical',
+                text: `Total budget exceeded by ${formatCurrency(totalSpent - totalBudget)}`
+            });
+        }
+
+        if (timeRange === 'this-month' && totalBudget > 0 && projectedTotal > totalBudget && totalSpent <= totalBudget) {
+            alerts.push({
+                type: 'warning',
+                text: `Projected to exceed budget by ${formatCurrency(projectedTotal - totalBudget)}`
+            });
+        }
+
+        // --- RESTORED ANALYTICS LOGIC ---
+
+        // 2. Trend Data (Budget Aware)
+        let trendData: any[] = [];
+         if (timeRange.includes('month')) {
+            const daysInM = timeRange === 'this-month' ? new Date(currentYear, currentMonth + 1, 0).getDate() : new Date(currentYear, currentMonth, 0).getDate();
+            const dailyBudget = totalBudget / daysInM;
+            const daysMap = new Map<number, number>();
+            filteredExpenses.forEach(e => {
+                const d = new Date(e.date).getDate();
+                daysMap.set(d, (daysMap.get(d) || 0) + e.amount);
+            });
+            let cumSum = 0;
+            let cumBudget = 0;
+            for (let i = 1; i <= daysInM; i++) {
+                const val = daysMap.get(i) || 0;
+                cumSum += val;
+                cumBudget += dailyBudget;
+                trendData.push({ 
+                    name: `${i}`, 
+                    value: val, 
+                    cumulative: cumSum,
+                    budgetLine: dailyBudget 
+                });
+            }
+        } else {
+            // Monthly Trend for Year
+             const monthMap = new Map<number, number>();
+                filteredExpenses.forEach(e => {
+                    const m = new Date(e.date).getMonth();
+                    monthMap.set(m, (monthMap.get(m) || 0) + e.amount);
+                });
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const monthlyExactBudget = totalBudget / 12; // Approximation
+                trendData = months.map((m, i) => ({ 
+                    name: m, 
+                    value: monthMap.get(i) || 0,
+                    budgetLine: monthlyExactBudget
+                }));
+        }
+
+        // 3. Payment Breakdown Extended (Always show all types)
+        const paymentMap = new Map<string, {amount: number, count: number}>();
+        filteredExpenses.forEach(e => {
+            const type = e.paymentMethod || 'other';
+            const curr = paymentMap.get(type) || {amount: 0, count: 0};
+            curr.amount += e.amount;
+            curr.count += 1;
+            paymentMap.set(type, curr);
+        });
+
+        const ALL_METHODS = ['upi', 'credit', 'debit', 'cash', 'other'];
+        const paymentData = ALL_METHODS.map(key => {
+            const val = paymentMap.get(key) || { amount: 0, count: 0 };
+            return {
+                name: key === 'credit' ? 'Credit Card' : key === 'upi' ? 'UPI' : key.charAt(0).toUpperCase() + key.slice(1),
+                value: val.amount,
+                count: val.count,
+                avg: val.count > 0 ? val.amount / val.count : 0,
+                percent: totalSpent > 0 ? (val.amount / totalSpent) * 100 : 0,
+                rawKey: key
+            };
+        }); // Removed sort to keep consistent order, or can sort if preferred. Let's keep fixed order for "all" view.
+
+        // 4. Smart Insights
+        const insights: { type: 'warning' | 'success' | 'info' | 'neutral' | 'critical' | 'alert' | 'safe', text: string }[] = [];
+        // Insight 1: Spending Spike
+        if (prevSpent > 0 && changePercent > 15) insights.push({ type: 'warning', text: `Spending is ${changePercent.toFixed(0)}% higher than previous period.` });
+        if (prevSpent > 0 && changePercent < -15) insights.push({ type: 'success', text: `Spending is ${Math.abs(changePercent).toFixed(0)}% lower than previous period.` });
+        
+        // Insight 2: Largest Expense
+        const sortedByAmt = [...filteredExpenses].sort((a,b) => b.amount - a.amount);
+        if (sortedByAmt.length > 0) {
+            insights.push({ type: 'info', text: `Largest spend: ${sortedByAmt[0].description} (${formatCurrency(sortedByAmt[0].amount)})` });
+        }
+        
+        // Insight 3: Most active category
+        const catCounts = new Map<string, number>();
+        filteredExpenses.forEach(e => catCounts.set(e.categoryId, (catCounts.get(e.categoryId) || 0) + 1));
+        let maxCat = ''; let maxCount = 0;
+        catCounts.forEach((v, k) => { if(v > maxCount) { maxCount = v; maxCat = k; } });
+        const maxCatName = categories.find(c => c.id === maxCat)?.name;
+        if (maxCatName) insights.push({ type: 'neutral', text: `Most frequent category: ${maxCatName} (${maxCount} txns)` });
+
+        // 5. Top Vendors
+        const vendorMap = new Map<string, number>();
+        filteredExpenses.forEach(e => {
+            const v = (e.description || 'Unknown').trim();
+            vendorMap.set(v, (vendorMap.get(v) || 0) + e.amount);
+        });
+        const topVendors = Array.from(vendorMap.entries())
+            .map(([name, value]) => ({ name, value }))
+            .sort((a,b) => b.value - a.value)
+            .slice(0, 5);
 
         return {
-            totalSpentMonth,
-            totalSpentLifetime,
-            displayedTotalSpent,
-            lastMonthSpent: totalSpentLastMonth,
-            momChange,
-            totalBudget,
-            remainingBudget,
-            budgetHealth,
-            categoryStats,
-            categoryChartData,
-            comparisonList,
+            totalSpent,
+            prevSpent,
+            changePercent,
+            filteredExpenses,
+            rangeLabel,
+            trendData,
             paymentData,
-            monthNames: { current: currentMonthName, last: lastMonthName, shortCurr, shortLast },
-            dailyAverage,
-            transactionCount: displayedExpenses.length
+            insights: [...insights, ...alerts], // Merge insights and alerts
+            topVendors,
+            categoryStats: categoryPerf, // Use the budget-aware perf list
+            avgTransaction,
+            avgPerUnit,
+            avgLabel,
+            totalBudget,
+            budgetHealth,
+            remainingBudget,
+            daysLeft,
+            projectedTotal
         };
-    }, [expenses, categories, viewMode]);
 
-    const CATEGORY_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#64748b', '#94a3b8'];
-    const PAYMENT_COLORS: Record<string, string> = {
-        'cash': '#22c55e',
-        'upi': '#f59e0b',
-        'credit': '#3b82f6',
-        'debit': '#8b5cf6',
-        'other': '#94a3b8'
+    }, [expenses, categories, timeRange]);
+
+    // UI Helpers
+    const PAYMENT_COLORS: Record<string, string> = { 'cash': '#22c55e', 'upi': '#f59e0b', 'credit': '#3b82f6', 'debit': '#8b5cf6', 'other': '#94a3b8' };
+    
+    // Status Badge Helper
+    const StatusBadge = ({ status }: { status: string }) => {
+        const styles = {
+            'critical': 'bg-rose-100 text-rose-700 border-rose-200',
+            'alert': 'bg-orange-100 text-orange-700 border-orange-200',
+            'warning': 'bg-amber-100 text-amber-700 border-amber-200',
+            'safe': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            'no-budget': 'bg-slate-100 text-slate-500 border-slate-200'
+        }[status] || 'bg-slate-100 text-slate-500';
+        
+        const label = { 'critical': 'Over', 'alert': 'Alert', 'warning': 'Warning', 'safe': 'Good', 'no-budget': 'None' }[status];
+        
+        return (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${styles}`}>
+                {label}
+            </span>
+        );
     };
 
     if (loading) return <div className="p-8"><div className="h-10 w-48 skeleton rounded mb-8"></div></div>;
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-12">
-            <div className="flex items-center justify-between">
+            {/* Header with Time Control */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Overview</h1>
-                   <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">
-                       {viewMode === 'month' ? metrics.monthNames.current : 'All Time Overview'}
-                   </p>
+                   <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">{analytics.rangeLabel}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="bg-slate-100 p-1 rounded-xl flex text-xs font-bold">
+                
+                <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 flex overflow-x-auto text-[10px] font-bold no-scrollbar">
+                    {(['this-month', 'last-month', 'this-year', 'all-time'] as const).map(range => (
                         <button 
-                            onClick={() => setViewMode('month')} 
-                            className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'month' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            key={range}
+                            onClick={() => setTimeRange(range)} 
+                            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${timeRange === range ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
                         >
-                            Monthly
+                            {range.replace('-', ' ').toUpperCase()}
                         </button>
-                        <button 
-                            onClick={() => setViewMode('total')} 
-                            className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'total' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            Total
-                        </button>
-                    </div>
+                    ))}
+                    <Link to="/expenses" className="px-4 py-2 ml-2 border-l border-slate-100 text-indigo-600 hover:text-indigo-700">
+                        LEDGER
+                    </Link>
                 </div>
             </div>
 
-            {/* TOP METRICS CARDS */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {/* 1. Total Spend (Context Aware) */}
+            {/* BUDGET DASHBOARD (Top Cards) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 1. Total Spent */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Total Spent</p>
+                     <p className="text-2xl font-black text-slate-900 mb-1">{formatCurrency(analytics.totalSpent)}</p>
+                     {timeRange !== 'all-time' && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                             <div className={`px-2 py-0.5 rounded-md text-[10px] font-black ${analytics.changePercent > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                 {analytics.changePercent > 0 ? '↑' : '↓'} {Math.abs(analytics.changePercent).toFixed(0)}%
+                             </div>
+                             <span className="text-[10px] text-slate-400 font-bold">vs prev</span>
+                        </div>
+                     )}
+                </div>
+
+                {/* 2. Budget Health */}
                 <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                         <ICONS.Expense className="w-12 h-12 text-indigo-600" />
+                     <div className="flex justify-between items-start mb-2">
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Budget Health</p>
+                        <ICONS.Chart className={`w-4 h-4 ${analytics.budgetHealth > 100 ? 'text-rose-500' : analytics.budgetHealth > 90 ? 'text-orange-500' : 'text-emerald-500'}`} />
                      </div>
-                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">
-                         {viewMode === 'month' ? 'Total Spent (Month)' : 'Total Spent (All Time)'}
-                     </p>
-                     <p className="text-2xl font-black text-slate-900 mb-1">{formatCurrency(metrics.displayedTotalSpent)}</p>
-                     {viewMode === 'month' && (
-                         <div className="flex items-center gap-1">
-                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${metrics.momChange > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                                 {metrics.momChange > 0 ? '↑' : '↓'} {Math.abs(metrics.momChange).toFixed(1)}%
-                             </span>
-                             <span className="text-[10px] text-slate-400 font-bold">vs last mo</span>
+                     {analytics.totalBudget > 0 ? (
+                        <>
+                            <p className="text-2xl font-black text-slate-900 mb-1">{analytics.budgetHealth.toFixed(0)}<span className="text-sm text-slate-400">%</span></p>
+                            <p className="text-[10px] font-bold text-slate-400 mb-2">of {formatCurrency(analytics.totalBudget)} limit</p>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div 
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                        analytics.budgetHealth > 100 ? 'bg-rose-500' : 
+                                        analytics.budgetHealth > 90 ? 'bg-orange-500' : 
+                                        analytics.budgetHealth > 70 ? 'bg-amber-500' : 
+                                        'bg-emerald-500'
+                                    }`}
+                                    style={{ width: `${Math.min(analytics.budgetHealth, 100)}%` }}
+                                />
+                            </div>
+                        </>
+                     ) : (
+                        <p className="text-sm font-bold text-slate-400 mt-2 italic">No budget set</p>
+                     )}
+                </div>
+
+                {/* 3. Remaining */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Remaining</p>
+                     {analytics.totalBudget > 0 ? (
+                        <>
+                            <p className={`text-2xl font-black mb-1 ${analytics.remainingBudget < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                {formatCurrency(analytics.remainingBudget)}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${analytics.daysLeft < 5 ? 'bg-orange-50 text-orange-600' : 'bg-slate-50 text-slate-500'}`}>
+                                    {analytics.daysLeft} days left
+                                </span>
+                                {analytics.projectedTotal > analytics.totalBudget && analytics.remainingBudget > 0 && (
+                                     <span className="text-[10px] font-bold text-orange-500" title={`Projected: ${formatCurrency(analytics.projectedTotal)}`}>
+                                        ⚠️ Projected Over
+                                     </span>
+                                )}
+                            </div>
+                        </>
+                     ) : (
+                         <div className="flex items-center gap-2 mt-4 text-slate-400">
+                             <ICONS.Info className="w-4 h-4"/>
+                             <span className="text-xs font-bold">Set budget to track</span>
                          </div>
                      )}
                 </div>
 
-                 {/* 2. Budget Remaining */}
-                 <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                         <ICONS.Chart className="w-12 h-12 text-emerald-600" />
-                     </div>
-                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Month Budget</p>
-                     <p className={`text-2xl font-black mb-1 ${metrics.remainingBudget < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                         {formatCurrency(metrics.remainingBudget)}
-                     </p>
-                     <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
-                         <div 
-                            className={`h-full rounded-full ${metrics.budgetHealth > 100 ? 'bg-rose-500' : 'bg-emerald-500'}`} 
-                            style={{ width: `${Math.min(metrics.budgetHealth, 100)}%` }}
-                         />
-                     </div>
+                 {/* 4. Top Spending */}
+                 <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Top Spend</p>
+                     {analytics.topVendors.length > 0 ? (
+                        <div>
+                            <p className="text-lg font-black text-slate-900 truncate" title={analytics.topVendors[0].name}>{analytics.topVendors[0].name}</p>
+                            <p className="text-xs font-bold text-indigo-600">{formatCurrency(analytics.topVendors[0].value)}</p>
+                            <p className="text-[10px] text-slate-400 mt-1 font-bold">{((analytics.topVendors[0].value / analytics.totalSpent) * 100).toFixed(0)}% of total</p>
+                        </div>
+                     ) : (
+                        <p className="text-slate-300 font-bold text-sm">No Data</p>
+                     )}
                 </div>
-
-                {/* 3. Daily Average */}
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                         <ICONS.Calendar className="w-12 h-12 text-blue-600" />
-                     </div>
-                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Daily Avg (Month)</p>
-                     <p className="text-2xl font-black text-slate-900 mb-1">{formatCurrency(metrics.dailyAverage)}</p>
-                     <p className="text-[10px] text-slate-400 font-bold">per day</p>
+            </div>
+            
+            {/* SPENDING TREND CHART */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="mb-6 flex justify-between items-end">
+                    <div>
+                        <h2 className="text-lg font-black text-slate-900">Spending Trends</h2>
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Actual vs Budget</p>
+                    </div>
                 </div>
-
-                 {/* 4. Transactions Count */}
-                 <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                         <ICONS.Dashboard className="w-12 h-12 text-orange-600" />
-                     </div>
-                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Transactions</p>
-                     <p className="text-2xl font-black text-slate-900 mb-1">{metrics.transactionCount}</p>
-                     <p className="text-[10px] text-slate-400 font-bold">in {viewMode === 'month' ? 'current month' : 'total'}</p>
+                <div className="h-64 w-full text-xs">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={analytics.trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                             <defs>
+                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis 
+                                dataKey="name" 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{fill: '#64748b', fontSize: 10, fontWeight: 700}}
+                                dy={10}
+                                interval={'preserveStartEnd'}
+                            />
+                            <YAxis 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{fill: '#94a3b8', fontSize: 10}}
+                                tickFormatter={(val) => `₹${val/1000}k`}
+                            />
+                            <Tooltip 
+                                cursor={{stroke: '#6366f1', strokeWidth: 1}}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                formatter={(value: number, name: string) => [formatCurrency(value), name === 'budgetLine' ? 'Budget' : 'Spent']}
+                            />
+                            <Legend iconType="circle" />
+                            <Area type="monotone" dataKey="value" name="Spent" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                            {/* Budget Line if available */}
+                            {analytics.totalBudget > 0 && (
+                                <Area type="monotone" dataKey="budgetLine" name="Budget" stroke="#94a3b8" strokeDasharray="4 4" strokeWidth={2} fill="none" />
+                            )}
+                        </AreaChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                 {/* SECTION 1: CATEGORY BREAKDOWN (Context Aware) */}
-                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-fit">
-                    <div className="mb-6 flex justify-between items-start">
-                        <div>
-                            <h2 className="text-lg font-black text-slate-900">Category Breakdown</h2>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">{viewMode === 'month' ? 'Current Month' : 'All Time'} Distribution</p>
-                        </div>
+                {/* CATEGORY BUDGET BREAKDOWN */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-black text-slate-900">Budget vs Actual</h2>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{analytics.categoryStats.length} Categories</span>
                     </div>
                     
-                    <div className="space-y-5 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                        {metrics.categoryStats.map((cat, idx) => (
-                            <div key={cat.id}>
-                                <div className="flex justify-between items-end mb-1">
-                                    <div className="flex items-center gap-2">
-                                         <div className={`p-1.5 rounded-lg bg-slate-50 text-slate-600`}>
+                    <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                        {analytics.categoryStats.map((cat, idx) => (
+                            <div key={idx} className="group">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex items-center gap-3">
+                                         <div className={`p-2 rounded-xl text-slate-600 ${
+                                             cat.status === 'critical' ? 'bg-rose-50' : 
+                                             cat.status === 'alert' ? 'bg-orange-50' :
+                                             'bg-slate-50'
+                                         }`}>
                                              <ICONS.Category className="w-4 h-4" />
                                          </div>
-                                         <span className="text-xs font-bold text-slate-700">{cat.name}</span>
+                                         <div>
+                                            <span className="text-sm font-bold text-slate-900 block">{cat.name}</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                                {cat.budget > 0 ? `${cat.percent.toFixed(0)}% Used` : 'No Limit'}
+                                            </span>
+                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-xs font-black text-slate-900">{formatCurrency(cat.spent)}</span>
-                                    </div>
-                                </div>
-                                <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div 
-                                        className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
-                                        style={{ 
-                                            width: `${cat.percentage}%`,
-                                            backgroundColor: CATEGORY_COLORS[idx % CATEGORY_COLORS.length]
-                                        }}
-                                    />
-                                </div>
-                                <p className="text-[10px] font-bold text-slate-400 mt-1 text-right">{cat.percentage.toFixed(1)}%</p>
-                            </div>
-                        ))}
-                        {metrics.categoryStats.length === 0 && <p className="text-center text-slate-400 text-xs py-8">No categories found</p>}
-                    </div>
-                 </div>
-
-                 {/* SECTION 2: COMPARISON OR ANALYSIS (Based on ViewMode) */}
-                 <div className="space-y-8">
-                     
-                     {/* IF MONTHLY VIEW: Show Comparison List */}
-                     {viewMode === 'month' ? (
-                        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                            <div className="mb-6">
-                                <h2 className="text-lg font-black text-slate-900">Monthly Comparison</h2>
-                                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                    {metrics.monthNames.current} vs {metrics.monthNames.last}
-                                </p>
-                            </div>
-
-                            {/* Summary Header for Comparison */}
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                                    <p className="text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-1">{metrics.monthNames.shortLast}</p>
-                                    <p className="text-lg font-black text-indigo-900">{formatCurrency(metrics.lastMonthSpent)}</p>
-                                </div>
-                                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 relative overflow-hidden">
-                                    <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-1">{metrics.monthNames.shortCurr}</p>
-                                    <p className="text-lg font-black text-emerald-900">{formatCurrency(metrics.totalSpentMonth)}</p>
-                                    <div className={`absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-black ${metrics.momChange > 0 ? 'bg-white/50 text-rose-600' : 'bg-white/50 text-emerald-600'}`}>
-                                        {metrics.momChange > 0 ? '↑' : '↓'}{Math.abs(metrics.momChange).toFixed(1)}%
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Detailed List */}
-                            <div className="max-h-64 overflow-y-auto custom-scrollbar pr-2 space-y-3">
-                                <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2">
-                                    <span>Category</span>
-                                    <div className="flex gap-6">
-                                        <span className="w-16 text-right">{metrics.monthNames.shortLast}</span>
-                                        <span className="w-16 text-right">{metrics.monthNames.shortCurr}</span>
-                                    </div>
-                                </div>
-                                
-                                {metrics.comparisonList.map(item => (
-                                    <div key={item.name} className="flex items-center justify-between text-xs p-2 hover:bg-slate-50 rounded-lg transition-colors">
-                                        <span className="font-bold text-slate-700 flex-1 truncate">{item.name}</span>
-                                        <div className="flex gap-6 text-right">
-                                            <span className="font-medium text-slate-400 w-16">{formatCurrency(item.lastVal)}</span>
-                                            <span className={`font-bold w-16 ${item.thisMonth > item.lastVal ? 'text-rose-600' : 'text-emerald-600'}`}>
-                                                {formatCurrency(item.thisMonth)}
+                                    <div className="flex flex-col items-end gap-1">
+                                        <StatusBadge status={cat.status} />
+                                        <div className="text-right">
+                                            <span className="text-xs font-black text-slate-900">{formatCurrency(cat.spent)}</span>
+                                            <span className="text-[10px] text-slate-400 font-bold ml-1">
+                                                {cat.budget > 0 ? `/ ${formatCurrency(cat.budget)}` : ''}
                                             </span>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                     ) : (
-                        /* IF TOTAL VIEW: Show Visual Analysis Chart */
-                        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-[420px]">
-                             <div className="mb-2">
-                                <h2 className="text-lg font-black text-slate-900">Category Analysis</h2>
-                                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">All-time Spending Distribution</p>
-                            </div>
-                            <div className="h-full w-full -mt-4">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={metrics.categoryChartData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={80}
-                                            outerRadius={100}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            {metrics.categoryChartData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                        <Legend 
-                                            layout="vertical" 
-                                            verticalAlign="middle" 
-                                            align="right"
-                                            iconType="circle"
-                                            wrapperStyle={{ fontSize: '11px', fontWeight: '700', color: '#64748b' }}
+                                </div>
+                                
+                                {cat.budget > 0 ? (
+                                    <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${
+                                                cat.status === 'critical' ? 'bg-rose-500' : 
+                                                cat.status === 'alert' ? 'bg-orange-500' : 
+                                                cat.status === 'warning' ? 'bg-amber-500' : 
+                                                'bg-emerald-500'
+                                            }`}
+                                            style={{ width: `${Math.min(cat.percent, 100)}%` }}
                                         />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                                    </div>
+                                ) : (
+                                    <div className="relative w-full h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                                        {/* Neutral bar for no-budget items if they have spending, or just empty */}
+                                         <div 
+                                            className="absolute left-0 top-0 h-full rounded-full bg-slate-200"
+                                            style={{ width: analytics.totalSpent > 0 ? `${(cat.spent / analytics.totalSpent) * 100}%` : '0%' }}
+                                        />
+                                    </div>
+                                )}
+                                
+                                <div className="flex justify-between mt-1 text-[10px] font-bold text-slate-400">
+                                    {cat.budget > 0 ? (
+                                        <>
+                                            <span>{cat.remaining < 0 ? 'Overspent' : 'Remaining'}</span>
+                                            <span className={cat.remaining < 0 ? 'text-rose-500' : 'text-emerald-600'}>
+                                                {cat.remaining < 0 ? '-' : ''}{formatCurrency(Math.abs(cat.remaining))}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>Contribution</span>
+                                            <span>{analytics.totalSpent > 0 ? ((cat.spent / analytics.totalSpent) * 100).toFixed(0) : 0}% of Total</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ALERTS & INSIGHTS GRID */}
+                <div className="space-y-8">
+                     {/* Alerts Panel */}
+                     {analytics.insights.length > 0 && (
+                        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                            <h2 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
+                                Insights & Alerts
+                                <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{analytics.insights.length}</span>
+                            </h2>
+                            <div className="space-y-3">
+                                {analytics.insights.slice(0, 5).map((insight, idx) => {
+                                    const isAlert = ['critical', 'warning', 'alert'].includes(insight.type);
+                                    return (
+                                        <div key={idx} className={`p-3 rounded-xl flex gap-3 ${
+                                            insight.type === 'critical' ? 'bg-rose-50 text-rose-900' : 
+                                            insight.type === 'warning' || insight.type === 'alert' ? 'bg-orange-50 text-orange-900' : 
+                                            'bg-indigo-50 text-indigo-900'
+                                        }`}>
+                                            <div className={`shrink-0 pt-0.5 ${
+                                                insight.type === 'critical' ? 'text-rose-500' : 
+                                                insight.type === 'warning' || insight.type === 'alert' ? 'text-orange-500' : 
+                                                'text-indigo-500'
+                                            }`}>
+                                                {isAlert ? <ICONS.Alert className="w-4 h-4"/> : <ICONS.Lightbulb className="w-4 h-4"/>}
+                                            </div>
+                                            <p className="text-xs font-bold leading-snug">{insight.text}</p>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                      )}
 
-                     {/* Payment Breakdown (Context Aware) */}
+                     {/* Payment Analysis */}
                      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                        <div className="mb-6">
-                            <h2 className="text-lg font-black text-slate-900">Payment Breakdown</h2>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">{viewMode === 'month' ? 'Current Month' : 'All Time'} Distribution</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                            {metrics.paymentData.map((method, idx) => (
-                                <div key={method.name} className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{method.name}</p>
+                        <h2 className="text-lg font-black text-slate-900 mb-6">Payment Analysis</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {analytics.paymentData.map((method, idx) => (
+                                <div key={method.name} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:border-indigo-100 transition-colors">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{method.name}</p>
+                                        <p className="text-[10px] font-black text-slate-300 group-hover:text-indigo-400 transition-colors">{method.count} txns</p>
+                                    </div>
                                     <p className="text-lg font-black text-slate-900 mb-1">{formatCurrency(method.value)}</p>
-                                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                    <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden mt-2">
                                         <div 
                                             className="h-full rounded-full" 
                                             style={{ 
-                                                width: `${method.percentage}%`,
-                                                backgroundColor: PAYMENT_COLORS[method.colorKey as keyof typeof PAYMENT_COLORS] || '#94a3b8'
+                                                width: `${method.percent}%`,
+                                                backgroundColor: PAYMENT_COLORS[method.rawKey] || '#94a3b8'
                                             }} 
                                         />
                                     </div>
-                                    <p className="text-[10px] font-bold text-slate-400 mt-1">{method.percentage.toFixed(0)}%</p>
                                 </div>
                             ))}
                         </div>
                      </div>
                  </div>
-            </div>
 
-            {/* Recent Transactions Table */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mt-8">
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                    <h3 className="text-lg font-black text-slate-900">Recent Activity</h3>
-                    <Link to="/expenses" className="text-xs font-bold text-indigo-600 hover:text-indigo-700">View Full Ledger</Link>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                             <tr>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Date</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Card/Account</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Description</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Amount</th>
-                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {expenses.slice(0, 10).map(exp => {
-                                const account = accounts.find(a => a.id === exp.accountId);
-                                return (
-                                <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <span className="text-[11px] font-bold text-slate-700 uppercase">
-                                            {new Date(exp.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                         <div className="flex items-center gap-2">
-                                            <span className="p-1 rounded bg-slate-100 text-slate-500">
-                                                {exp.paymentMethod === 'upi' ? <ICONS.Account className="w-3 h-3"/> : exp.paymentMethod === 'credit' ? <ICONS.Cards className="w-3 h-3"/> : <ICONS.Expense className="w-3 h-3"/>}
-                                            </span>
-                                            <span className="text-xs font-bold text-slate-700">
-                                                {account ? (account.nickname || account.name) : (exp.paymentMethod.toUpperCase())}
-                                            </span>
-                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-xs font-bold text-slate-600">
-                                            {categories.find(c => c.id === exp.categoryId)?.name || 'Misc'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-xs text-slate-500 font-medium truncate max-w-[200px]">{exp.description || '-'}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                         <span className="text-sm font-black text-slate-900">
-                                            {formatCurrency(exp.amount)}
-                                         </span>
-                                    </td>
-                                </tr>
-                            )})}
-                        </tbody>
-                    </table>
-                </div>
+                 <div className="lg:col-span-2">
+                     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-lg font-black text-slate-900">Recent Transactions</h3>
+                            <Link to="/expenses" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline">
+                                View All
+                            </Link>
+                        </div>
+                         <div className="overflow-x-auto">
+                            <table className="min-w-full">
+                                <thead className="bg-slate-50 border-b border-slate-200">
+                                     <tr>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Date</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Description</th>
+                                        <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Amount</th>
+                                     </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {analytics.filteredExpenses.slice(0, 10).map(exp => (
+                                        <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <span className="text-[11px] font-bold text-slate-700 uppercase">
+                                                    {new Date(exp.date).toLocaleDateString(undefined, {month:'short', day:'numeric', year: 'numeric'})}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-xs font-bold text-slate-600">
+                                                    {categories.find(c => c.id === exp.categoryId)?.name || 'Misc'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="text-xs text-slate-500 font-medium truncate max-w-[200px]">{exp.description || '-'}</p>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                 <span className="text-sm font-black text-slate-900">
+                                                    {formatCurrency(exp.amount)}
+                                                 </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                     </div>
+                 </div>
             </div>
         </div>
     );

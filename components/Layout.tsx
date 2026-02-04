@@ -67,7 +67,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const renderNavItem = (item: NavItem, depth = 0) => {
       // Check if current path matches item path OR if any child is active
       const isChildActive = item.children?.some(child => location.pathname === child.path || location.pathname.startsWith(child.path));
-      const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== '/') || isChildActive;
+      
+      // Strict check for items that might be prefixes of others (e.g., /expenses vs /expenses/overview)
+      // If an item has no children, it should be an exact match OR a subpath ONLY if it's not covered by another sibling. 
+      // Simplified: If it's a leaf node, strict match if it looks like a parent of another known route.
+      let isActive = false;
+      if (item.children) {
+          // Parent node: Active if exact match or child active
+           isActive = location.pathname === item.path || isChildActive || (location.pathname.startsWith(item.path) && item.path !== '/');
+      } else {
+          // Leaf node: active if exact match. 
+          // Special case: if we want /expenses to match /expenses/add but NOT /expenses/overview if 'overview' is a sibling.
+          // For now, strict exact match for leaf nodes is safest for the user's issue.
+          isActive = location.pathname === item.path;
+      }
       
       const Icon = item.icon;
       const isChild = depth > 0;
