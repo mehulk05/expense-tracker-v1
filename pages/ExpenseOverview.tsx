@@ -63,7 +63,7 @@ const ExpenseOverview: React.FC = () => {
                 if (currentMonth === 0) return d.getFullYear() === currentYear - 1 && d.getMonth() === 11;
                 return d.getFullYear() === currentYear && d.getMonth() === currentMonth - 1;
             });
-            rangeLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
+            rangeLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
             daysInPeriod = Math.min(new Date(currentYear, currentMonth + 1, 0).getDate(), now.getDate());
         
         } else if (timeRange === 'last-month') {
@@ -80,19 +80,19 @@ const ExpenseOverview: React.FC = () => {
                 const prevPrevDate = new Date(lmYear, lmMonth - 1, 1);
                 return d.getFullYear() === prevPrevDate.getFullYear() && d.getMonth() === prevPrevDate.getMonth();
             });
-            rangeLabel = lastMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
+            rangeLabel = lastMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
             daysInPeriod = new Date(lmYear, lmMonth + 1, 0).getDate();
 
         } else if (timeRange === 'this-year') {
             filteredExpenses = expenses.filter(e => new Date(e.date).getFullYear() === currentYear);
             previousExpenses = expenses.filter(e => new Date(e.date).getFullYear() === currentYear - 1);
-            rangeLabel = `${currentYear} ANALYTICS`;
+            rangeLabel = `${currentYear} Analytics`;
             daysInPeriod = (now.getTime() - new Date(currentYear, 0, 1).getTime()) / (1000 * 3600 * 24);
 
         } else { // all-time
             filteredExpenses = expenses;
             previousExpenses = []; // No comparison for all time
-            rangeLabel = 'LIFETIME OVERVIEW';
+            rangeLabel = 'Lifetime Overview';
             daysInPeriod = 1; // Not relevant for daily avg usually
         }
 
@@ -280,7 +280,7 @@ const ExpenseOverview: React.FC = () => {
                 percent: totalSpent > 0 ? (val.amount / totalSpent) * 100 : 0,
                 rawKey: key
             };
-        }); // Removed sort to keep consistent order, or can sort if preferred. Let's keep fixed order for "all" view.
+        });
 
         // 4. Smart Insights
         const insights: { type: 'warning' | 'success' | 'info' | 'neutral' | 'critical' | 'alert' | 'safe', text: string }[] = [];
@@ -337,22 +337,22 @@ const ExpenseOverview: React.FC = () => {
     }, [expenses, categories, timeRange]);
 
     // UI Helpers
-    const PAYMENT_COLORS: Record<string, string> = { 'cash': '#22c55e', 'upi': '#f59e0b', 'credit': '#3b82f6', 'debit': '#8b5cf6', 'other': '#94a3b8' };
+    const PAYMENT_COLORS: Record<string, string> = { 'cash': '#22c55e', 'upi': '#f59e0b', 'credit': '#3b82f6', 'debit': '#8b5cf6', 'other': '#9ca3af' };
     
     // Status Badge Helper
     const StatusBadge = ({ status }: { status: string }) => {
         const styles = {
-            'critical': 'bg-rose-100 text-rose-700 border-rose-200',
+            'critical': 'bg-red-100 text-red-700 border-red-200',
             'alert': 'bg-orange-100 text-orange-700 border-orange-200',
-            'warning': 'bg-amber-100 text-amber-700 border-amber-200',
+            'warning': 'bg-yellow-100 text-yellow-700 border-yellow-200',
             'safe': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-            'no-budget': 'bg-slate-100 text-slate-500 border-slate-200'
-        }[status] || 'bg-slate-100 text-slate-500';
+            'no-budget': 'bg-gray-100 text-gray-500 border-gray-200'
+        }[status] || 'bg-gray-100 text-gray-500';
         
         const label = { 'critical': 'Over', 'alert': 'Alert', 'warning': 'Warning', 'safe': 'Good', 'no-budget': 'None' }[status];
         
         return (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${styles}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${styles}`}>
                 {label}
             </span>
         );
@@ -361,25 +361,25 @@ const ExpenseOverview: React.FC = () => {
     if (loading) return <div className="p-8"><div className="h-10 w-48 skeleton rounded mb-8"></div></div>;
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-12">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 pb-12">
             {/* Header with Time Control */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                   <h1 className="text-2xl font-black text-slate-900 tracking-tight">Overview</h1>
-                   <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">{analytics.rangeLabel}</p>
+                   <h1 className="text-xl font-bold text-gray-900 tracking-tight">Overview</h1>
+                   <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mt-1">{analytics.rangeLabel}</p>
                 </div>
                 
-                <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 flex overflow-x-auto text-[10px] font-bold no-scrollbar">
+                <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex overflow-x-auto text-[10px] font-bold no-scrollbar">
                     {(['this-month', 'last-month', 'this-year', 'all-time'] as const).map(range => (
                         <button 
                             key={range}
                             onClick={() => setTimeRange(range)} 
-                            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${timeRange === range ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${timeRange === range ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
                         >
                             {range.replace('-', ' ').toUpperCase()}
                         </button>
                     ))}
-                    <Link to="/expenses" className="px-4 py-2 ml-2 border-l border-slate-100 text-indigo-600 hover:text-indigo-700">
+                    <Link to="/expenses" className="px-4 py-2 ml-2 border-l border-gray-100 text-blue-600 hover:text-blue-700">
                         LEDGER
                     </Link>
                 </div>
@@ -388,35 +388,35 @@ const ExpenseOverview: React.FC = () => {
             {/* BUDGET DASHBOARD (Top Cards) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* 1. Total Spent */}
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Total Spent</p>
-                     <p className="text-2xl font-black text-slate-900 mb-1">{formatCurrency(analytics.totalSpent)}</p>
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-2">Total Spent</p>
+                     <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(analytics.totalSpent)}</p>
                      {timeRange !== 'all-time' && (
                         <div className="flex items-center gap-1.5 mt-2">
-                             <div className={`px-2 py-0.5 rounded-md text-[10px] font-black ${analytics.changePercent > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                             <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${analytics.changePercent > 0 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
                                  {analytics.changePercent > 0 ? '↑' : '↓'} {Math.abs(analytics.changePercent).toFixed(0)}%
                              </div>
-                             <span className="text-[10px] text-slate-400 font-bold">vs prev</span>
+                             <span className="text-[10px] text-gray-400 font-semibold">vs prev</span>
                         </div>
                      )}
                 </div>
 
                 {/* 2. Budget Health */}
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group">
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Budget Health</p>
-                        <ICONS.Chart className={`w-4 h-4 ${analytics.budgetHealth > 100 ? 'text-rose-500' : analytics.budgetHealth > 90 ? 'text-orange-500' : 'text-emerald-500'}`} />
+                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Budget Health</p>
+                        <ICONS.Chart className={`w-4 h-4 ${analytics.budgetHealth > 100 ? 'text-red-500' : analytics.budgetHealth > 90 ? 'text-orange-500' : 'text-emerald-500'}`} />
                      </div>
                      {analytics.totalBudget > 0 ? (
                         <>
-                            <p className="text-2xl font-black text-slate-900 mb-1">{analytics.budgetHealth.toFixed(0)}<span className="text-sm text-slate-400">%</span></p>
-                            <p className="text-[10px] font-bold text-slate-400 mb-2">of {formatCurrency(analytics.totalBudget)} limit</p>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <p className="text-2xl font-bold text-gray-900 mb-1">{analytics.budgetHealth.toFixed(0)}<span className="text-sm text-gray-400">%</span></p>
+                            <p className="text-[10px] font-bold text-gray-400 mb-2">of {formatCurrency(analytics.totalBudget)} limit</p>
+                            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                                 <div 
                                     className={`h-full rounded-full transition-all duration-500 ${
-                                        analytics.budgetHealth > 100 ? 'bg-rose-500' : 
+                                        analytics.budgetHealth > 100 ? 'bg-red-500' : 
                                         analytics.budgetHealth > 90 ? 'bg-orange-500' : 
-                                        analytics.budgetHealth > 70 ? 'bg-amber-500' : 
+                                        analytics.budgetHealth > 70 ? 'bg-yellow-500' : 
                                         'bg-emerald-500'
                                     }`}
                                     style={{ width: `${Math.min(analytics.budgetHealth, 100)}%` }}
@@ -424,20 +424,20 @@ const ExpenseOverview: React.FC = () => {
                             </div>
                         </>
                      ) : (
-                        <p className="text-sm font-bold text-slate-400 mt-2 italic">No budget set</p>
+                        <p className="text-sm font-bold text-gray-400 mt-2 italic">No budget set</p>
                      )}
                 </div>
 
                 {/* 3. Remaining */}
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Remaining</p>
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-2">Remaining</p>
                      {analytics.totalBudget > 0 ? (
                         <>
-                            <p className={`text-2xl font-black mb-1 ${analytics.remainingBudget < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                            <p className={`text-2xl font-bold mb-1 ${analytics.remainingBudget < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                                 {formatCurrency(analytics.remainingBudget)}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
-                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${analytics.daysLeft < 5 ? 'bg-orange-50 text-orange-600' : 'bg-slate-50 text-slate-500'}`}>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${analytics.daysLeft < 5 ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
                                     {analytics.daysLeft} days left
                                 </span>
                                 {analytics.projectedTotal > analytics.totalBudget && analytics.remainingBudget > 0 && (
@@ -448,7 +448,7 @@ const ExpenseOverview: React.FC = () => {
                             </div>
                         </>
                      ) : (
-                         <div className="flex items-center gap-2 mt-4 text-slate-400">
+                         <div className="flex items-center gap-2 mt-4 text-gray-400">
                              <ICONS.Info className="w-4 h-4"/>
                              <span className="text-xs font-bold">Set budget to track</span>
                          </div>
@@ -456,26 +456,26 @@ const ExpenseOverview: React.FC = () => {
                 </div>
 
                  {/* 4. Top Spending */}
-                 <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Top Spend</p>
+                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-2">Top Spend</p>
                      {analytics.topVendors.length > 0 ? (
                         <div>
-                            <p className="text-lg font-black text-slate-900 truncate" title={analytics.topVendors[0].name}>{analytics.topVendors[0].name}</p>
-                            <p className="text-xs font-bold text-indigo-600">{formatCurrency(analytics.topVendors[0].value)}</p>
-                            <p className="text-[10px] text-slate-400 mt-1 font-bold">{((analytics.topVendors[0].value / analytics.totalSpent) * 100).toFixed(0)}% of total</p>
+                            <p className="text-lg font-bold text-gray-900 truncate" title={analytics.topVendors[0].name}>{analytics.topVendors[0].name}</p>
+                            <p className="text-xs font-bold text-blue-600">{formatCurrency(analytics.topVendors[0].value)}</p>
+                            <p className="text-[10px] text-gray-400 mt-1 font-bold">{((analytics.topVendors[0].value / analytics.totalSpent) * 100).toFixed(0)}% of total</p>
                         </div>
                      ) : (
-                        <p className="text-slate-300 font-bold text-sm">No Data</p>
+                        <p className="text-gray-300 font-bold text-sm">No Data</p>
                      )}
                 </div>
             </div>
             
             {/* SPENDING TREND CHART */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                 <div className="mb-6 flex justify-between items-end">
                     <div>
-                        <h2 className="text-lg font-black text-slate-900">Spending Trends</h2>
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Actual vs Budget</p>
+                        <h2 className="text-lg font-bold text-gray-900">Spending Trends</h2>
+                        <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Actual vs Budget</p>
                     </div>
                 </div>
                 <div className="h-64 w-full text-xs">
@@ -483,35 +483,35 @@ const ExpenseOverview: React.FC = () => {
                         <AreaChart data={analytics.trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                              <defs>
                                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                             <XAxis 
                                 dataKey="name" 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{fill: '#64748b', fontSize: 10, fontWeight: 700}}
+                                tick={{fill: '#6b7280', fontSize: 10, fontWeight: 600}}
                                 dy={10}
                                 interval={'preserveStartEnd'}
                             />
                             <YAxis 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{fill: '#94a3b8', fontSize: 10}}
+                                tick={{fill: '#9ca3af', fontSize: 10}}
                                 tickFormatter={(val) => `₹${val/1000}k`}
                             />
                             <Tooltip 
-                                cursor={{stroke: '#6366f1', strokeWidth: 1}}
+                                cursor={{stroke: '#2563eb', strokeWidth: 1}}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 formatter={(value: number, name: string) => [formatCurrency(value), name === 'budgetLine' ? 'Budget' : 'Spent']}
                             />
                             <Legend iconType="circle" />
-                            <Area type="monotone" dataKey="value" name="Spent" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                            <Area type="monotone" dataKey="value" name="Spent" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                             {/* Budget Line if available */}
                             {analytics.totalBudget > 0 && (
-                                <Area type="monotone" dataKey="budgetLine" name="Budget" stroke="#94a3b8" strokeDasharray="4 4" strokeWidth={2} fill="none" />
+                                <Area type="monotone" dataKey="budgetLine" name="Budget" stroke="#9ca3af" strokeDasharray="4 4" strokeWidth={2} fill="none" />
                             )}
                         </AreaChart>
                     </ResponsiveContainer>
@@ -520,10 +520,10 @@ const ExpenseOverview: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* CATEGORY BUDGET BREAKDOWN */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-black text-slate-900">Budget vs Actual</h2>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{analytics.categoryStats.length} Categories</span>
+                        <h2 className="text-lg font-bold text-gray-900">Budget vs Actual</h2>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{analytics.categoryStats.length} Categories</span>
                     </div>
                     
                     <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
@@ -531,16 +531,16 @@ const ExpenseOverview: React.FC = () => {
                             <div key={idx} className="group">
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex items-center gap-3">
-                                         <div className={`p-2 rounded-xl text-slate-600 ${
-                                             cat.status === 'critical' ? 'bg-rose-50' : 
+                                         <div className={`p-2 rounded-lg text-gray-600 ${
+                                             cat.status === 'critical' ? 'bg-red-50' : 
                                              cat.status === 'alert' ? 'bg-orange-50' :
-                                             'bg-slate-50'
+                                             'bg-gray-50'
                                          }`}>
                                              <ICONS.Category className="w-4 h-4" />
                                          </div>
                                          <div>
-                                            <span className="text-sm font-bold text-slate-900 block">{cat.name}</span>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                            <span className="text-sm font-bold text-gray-900 block">{cat.name}</span>
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase">
                                                 {cat.budget > 0 ? `${cat.percent.toFixed(0)}% Used` : 'No Limit'}
                                             </span>
                                          </div>
@@ -548,8 +548,8 @@ const ExpenseOverview: React.FC = () => {
                                     <div className="flex flex-col items-end gap-1">
                                         <StatusBadge status={cat.status} />
                                         <div className="text-right">
-                                            <span className="text-xs font-black text-slate-900">{formatCurrency(cat.spent)}</span>
-                                            <span className="text-[10px] text-slate-400 font-bold ml-1">
+                                            <span className="text-xs font-bold text-gray-900">{formatCurrency(cat.spent)}</span>
+                                            <span className="text-[10px] text-gray-400 font-bold ml-1">
                                                 {cat.budget > 0 ? `/ ${formatCurrency(cat.budget)}` : ''}
                                             </span>
                                         </div>
@@ -557,32 +557,32 @@ const ExpenseOverview: React.FC = () => {
                                 </div>
                                 
                                 {cat.budget > 0 ? (
-                                    <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="relative w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                                         <div 
                                             className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${
-                                                cat.status === 'critical' ? 'bg-rose-500' : 
+                                                cat.status === 'critical' ? 'bg-red-500' : 
                                                 cat.status === 'alert' ? 'bg-orange-500' : 
-                                                cat.status === 'warning' ? 'bg-amber-500' : 
+                                                cat.status === 'warning' ? 'bg-yellow-500' : 
                                                 'bg-emerald-500'
                                             }`}
                                             style={{ width: `${Math.min(cat.percent, 100)}%` }}
                                         />
                                     </div>
                                 ) : (
-                                    <div className="relative w-full h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                                    <div className="relative w-full h-2 bg-gray-50 rounded-full overflow-hidden">
                                         {/* Neutral bar for no-budget items if they have spending, or just empty */}
                                          <div 
-                                            className="absolute left-0 top-0 h-full rounded-full bg-slate-200"
+                                            className="absolute left-0 top-0 h-full rounded-full bg-gray-200"
                                             style={{ width: analytics.totalSpent > 0 ? `${(cat.spent / analytics.totalSpent) * 100}%` : '0%' }}
                                         />
                                     </div>
                                 )}
                                 
-                                <div className="flex justify-between mt-1 text-[10px] font-bold text-slate-400">
+                                <div className="flex justify-between mt-1 text-[10px] font-bold text-gray-400">
                                     {cat.budget > 0 ? (
                                         <>
                                             <span>{cat.remaining < 0 ? 'Overspent' : 'Remaining'}</span>
-                                            <span className={cat.remaining < 0 ? 'text-rose-500' : 'text-emerald-600'}>
+                                            <span className={cat.remaining < 0 ? 'text-red-500' : 'text-emerald-600'}>
                                                 {cat.remaining < 0 ? '-' : ''}{formatCurrency(Math.abs(cat.remaining))}
                                             </span>
                                         </>
@@ -602,24 +602,24 @@ const ExpenseOverview: React.FC = () => {
                 <div className="space-y-8">
                      {/* Alerts Panel */}
                      {analytics.insights.length > 0 && (
-                        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                            <h2 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 Insights & Alerts
-                                <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{analytics.insights.length}</span>
+                                <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{analytics.insights.length}</span>
                             </h2>
                             <div className="space-y-3">
                                 {analytics.insights.slice(0, 5).map((insight, idx) => {
                                     const isAlert = ['critical', 'warning', 'alert'].includes(insight.type);
                                     return (
-                                        <div key={idx} className={`p-3 rounded-xl flex gap-3 ${
-                                            insight.type === 'critical' ? 'bg-rose-50 text-rose-900' : 
+                                        <div key={idx} className={`p-3 rounded-lg flex gap-3 ${
+                                            insight.type === 'critical' ? 'bg-red-50 text-red-900' : 
                                             insight.type === 'warning' || insight.type === 'alert' ? 'bg-orange-50 text-orange-900' : 
-                                            'bg-indigo-50 text-indigo-900'
+                                            'bg-blue-50 text-blue-900'
                                         }`}>
                                             <div className={`shrink-0 pt-0.5 ${
-                                                insight.type === 'critical' ? 'text-rose-500' : 
+                                                insight.type === 'critical' ? 'text-red-500' : 
                                                 insight.type === 'warning' || insight.type === 'alert' ? 'text-orange-500' : 
-                                                'text-indigo-500'
+                                                'text-blue-500'
                                             }`}>
                                                 {isAlert ? <ICONS.Alert className="w-4 h-4"/> : <ICONS.Lightbulb className="w-4 h-4"/>}
                                             </div>
@@ -632,22 +632,22 @@ const ExpenseOverview: React.FC = () => {
                      )}
 
                      {/* Payment Analysis */}
-                     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                        <h2 className="text-lg font-black text-slate-900 mb-6">Payment Analysis</h2>
+                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <h2 className="text-lg font-bold text-gray-900 mb-6">Payment Analysis</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {analytics.paymentData.map((method, idx) => (
-                                <div key={method.name} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:border-indigo-100 transition-colors">
+                                <div key={method.name} className="p-4 rounded-xl bg-gray-50 border border-gray-100 group hover:border-blue-100 transition-colors">
                                     <div className="flex justify-between items-start mb-2">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{method.name}</p>
-                                        <p className="text-[10px] font-black text-slate-300 group-hover:text-indigo-400 transition-colors">{method.count} txns</p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{method.name}</p>
+                                        <p className="text-[10px] font-bold text-gray-300 group-hover:text-blue-400 transition-colors">{method.count} txns</p>
                                     </div>
-                                    <p className="text-lg font-black text-slate-900 mb-1">{formatCurrency(method.value)}</p>
-                                    <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden mt-2">
+                                    <p className="text-lg font-bold text-gray-900 mb-1">{formatCurrency(method.value)}</p>
+                                    <div className="w-full bg-gray-200 h-1 rounded-full overflow-hidden mt-2">
                                         <div 
                                             className="h-full rounded-full" 
                                             style={{ 
                                                 width: `${method.percent}%`,
-                                                backgroundColor: PAYMENT_COLORS[method.rawKey] || '#94a3b8'
+                                                backgroundColor: PAYMENT_COLORS[method.rawKey] || '#9ca3af'
                                             }} 
                                         />
                                     </div>
@@ -658,41 +658,41 @@ const ExpenseOverview: React.FC = () => {
                  </div>
 
                  <div className="lg:col-span-2">
-                     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="text-lg font-black text-slate-900">Recent Transactions</h3>
-                            <Link to="/expenses" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline">
+                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-gray-900">Recent Transactions</h3>
+                            <Link to="/expenses" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
                                 View All
                             </Link>
                         </div>
                          <div className="overflow-x-auto">
                             <table className="min-w-full">
-                                <thead className="bg-slate-50 border-b border-slate-200">
+                                <thead className="bg-gray-50 border-b border-gray-200">
                                      <tr>
-                                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Date</th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Description</th>
-                                        <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Amount</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Date</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Category</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Description</th>
+                                        <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Amount</th>
                                      </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-50">
+                                <tbody className="divide-y divide-gray-50">
                                     {analytics.filteredExpenses.slice(0, 10).map(exp => (
-                                        <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <tr key={exp.id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-4">
-                                                <span className="text-[11px] font-bold text-slate-700 uppercase">
+                                                <span className="text-[11px] font-bold text-gray-700 uppercase">
                                                     {new Date(exp.date).toLocaleDateString(undefined, {month:'short', day:'numeric', year: 'numeric'})}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-xs font-bold text-slate-600">
+                                                <span className="text-xs font-bold text-gray-600">
                                                     {categories.find(c => c.id === exp.categoryId)?.name || 'Misc'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="text-xs text-slate-500 font-medium truncate max-w-[200px]">{exp.description || '-'}</p>
+                                                <p className="text-xs text-gray-500 font-medium truncate max-w-[200px]">{exp.description || '-'}</p>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                 <span className="text-sm font-black text-slate-900">
+                                                 <span className="text-sm font-bold text-gray-900">
                                                     {formatCurrency(exp.amount)}
                                                  </span>
                                             </td>

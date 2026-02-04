@@ -107,3 +107,10 @@ export interface PlannedExpense {
   note?: string;
   createdAt: string;
 }
+
+export interface ImportedExpense extends Expense {
+  validationError?: string;
+  originalRow?: number;
+  isDuplicate?: boolean;
+  skipDuplicate?: boolean; // User's choice: true = skip, false = import anyway
+}

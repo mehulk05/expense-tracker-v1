@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SidePopover from '../components/SidePopover';
 import { storage } from '../services/storage';
 import { Expense, Account, Category, AccountType } from '../types';
 import { ICONS } from '../constants';
 import { formatCurrency, formatInputAmount } from '../utils/currency';
-import { parseAndSaveCsvData } from '../utils/importHelpers';
 import { useToast } from '../context/ToastContext';
+import { AppCard } from '../components/ui/AppCard';
+import { AppButton } from '../components/ui/AppButton';
 
-const ITEMS_PER_PAGE = 10;
 
 const ExpenseManager: React.FC = () => {
+  const navigate = useNavigate();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -29,12 +30,10 @@ const ExpenseManager: React.FC = () => {
   
   // Search and Pagination state
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   
   // Multi-select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { addToast } = useToast();
 
   const loadData = async () => {
@@ -98,17 +97,19 @@ const ExpenseManager: React.FC = () => {
 
   // Update account selection when payment method changes
   useEffect(() => {
+    // Only auto-select first account when adding new expense, not when editing
+    if (editingId) return;
+    
     const filteredAccounts = accounts.filter(acc => acc.type === paymentMethod);
     if (filteredAccounts.length > 0) {
       setAccountId(filteredAccounts[0].id);
     } else {
       setAccountId('');
     }
-  }, [paymentMethod, accounts]);
+  }, [paymentMethod, accounts, editingId]);
 
   // Reset pagination when filter or search changes
   useEffect(() => {
-    setCurrentPage(1);
     setSelectedIds(new Set());
   }, [filter, searchTerm]);
 
@@ -221,41 +222,16 @@ const ExpenseManager: React.FC = () => {
       setShowAddForm(true);
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
 
-    setLoading(true);
-    try {
-      const { importedCount, errors } = await parseAndSaveCsvData(file, accounts, categories);
-      if (errors.length > 0) {
-        console.error("Import errors:", errors);
-        if (importedCount === 0) {
-             addToast(`Import Failed: ${errors[0]}`, 'error');
-        } else {
-             addToast(`Imported ${importedCount} expenses with warnings. Check console.`, 'info');
-        }
-      } else {
-        addToast(`Successfully imported ${importedCount} expenses!`, 'success');
-      }
-      await loadData(); // Reload all data to reflect new accounts and expenses
-    } catch (error) {
-      console.error("Import failed:", error);
-      addToast("Failed to import CSV file.", 'error');
-    } finally {
-      setLoading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
 
   // Helper to get payment badge style
   const getPaymentParams = (method: string) => {
       switch(method?.toLowerCase()) {
           case 'upi': return { label: 'UPI', style: 'bg-orange-50 text-orange-600 border-orange-100' };
-          case 'credit': return { label: 'Credit Card', style: 'bg-indigo-50 text-indigo-600 border-indigo-100' };
+          case 'credit': return { label: 'Credit Card', style: 'bg-blue-50 text-blue-600 border-blue-100' };
           case 'debit': return { label: 'Debit Card', style: 'bg-violet-50 text-violet-600 border-violet-100' };
           case 'cash': return { label: 'Cash', style: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
-          default: return { label: method || 'Other', style: 'bg-slate-50 text-slate-500 border-slate-200' };
+          default: return { label: method || 'Other', style: 'bg-gray-50 text-gray-500 border-gray-200' };
       }
   };
 
@@ -285,32 +261,28 @@ const ExpenseManager: React.FC = () => {
     return true;
   });
 
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredExpenses.length / ITEMS_PER_PAGE);
-  const paginatedExpenses = filteredExpenses.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
 
   if (loading) return (
      <div className="space-y-10">
-       <div className="h-16 skeleton rounded-2xl w-full"></div>
-       <div className="h-[500px] skeleton rounded-2xl w-full"></div>
+       <div className="h-16 skeleton rounded-xl w-full"></div>
+       <div className="h-[500px] skeleton rounded-xl w-full"></div>
      </div>
   );
 
   if (categories.length === 0) {
     return (
-      <div className="card-professional p-16 text-center max-w-xl mx-auto mt-24">
-        <div className="w-24 h-24 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-indigo-500 mx-auto mb-10 border-2 border-indigo-100 shadow-xl shadow-indigo-100/50">
+      <AppCard className="p-16 text-center max-w-xl mx-auto mt-24">
+        <div className="w-24 h-24 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 mx-auto mb-10 border-2 border-blue-100 shadow-xl shadow-blue-100/50">
           <ICONS.Category className="w-12 h-12" />
         </div>
-        <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tighter">Inventory Empty</h2>
-        <p className="text-slate-500 text-base font-semibold mb-12 leading-relaxed px-6">Your classification system is currently empty. Define categories to begin logging transactions.</p>
-        <Link to="/categories" className="btn-primary w-full !py-4.5 text-xs uppercase tracking-widest shadow-indigo-200">
-          Configure Categories
+        <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tighter">Inventory Empty</h2>
+        <p className="text-gray-500 text-base font-semibold mb-12 leading-relaxed px-6">Your classification system is currently empty. Define categories to begin logging transactions.</p>
+        <Link to="/categories">
+            <AppButton className="w-full !py-4.5 text-xs uppercase tracking-widest shadow-blue-200">
+                Configure Categories
+            </AppButton>
         </Link>
-      </div>
+      </AppCard>
     );
   }
 
@@ -319,119 +291,150 @@ const ExpenseManager: React.FC = () => {
       
       {/* SECTION 1: OVERVIEW METRICS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Spent This Year</p>
-              <p className="text-2xl font-black text-slate-900">{formatCurrency(metrics.yearTotal)}</p>
-          </div>
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Spent This Month</p>
+          <AppCard className="p-5">
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Spent This Year</p>
+              <p className="text-2xl font-black text-gray-900">{formatCurrency(metrics.yearTotal)}</p>
+          </AppCard>
+          <AppCard className="p-5">
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Spent This Month</p>
               <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-black text-slate-900">{formatCurrency(metrics.monthTotal)}</p>
-                  <span className="text-[10px] font-bold text-slate-400">
+                  <p className="text-2xl font-black text-gray-900">{formatCurrency(metrics.monthTotal)}</p>
+                  <span className="text-[10px] font-bold text-gray-400">
                       {((metrics.monthTotal / (metrics.yearTotal || 1)) * 100).toFixed(0)}% of year
                   </span>
               </div>
-          </div>
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Personal Spend (Year)</p>
-              <p className="text-2xl font-black text-indigo-600">{formatCurrency(metrics.personalTotal)}</p>
-          </div>
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">External Spend (Year)</p>
-              <p className="text-2xl font-black text-slate-900">{formatCurrency(metrics.externalTotal)}</p>
-          </div>
+          </AppCard>
+          <AppCard className="p-5">
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Personal Spend (Year)</p>
+              <p className="text-2xl font-black text-blue-600">{formatCurrency(metrics.personalTotal)}</p>
+          </AppCard>
+          <AppCard className="p-5">
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">External Spend (Year)</p>
+              <p className="text-2xl font-black text-gray-900">{formatCurrency(metrics.externalTotal)}</p>
+          </AppCard>
       </div>
       
       {/* SECTION 2: PAYMENT BREAKDOWN */}
       <div>
-         <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 px-2">Payment Breakdown</h3>
+         <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider mb-4 px-2">Payment Breakdown</h3>
          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-orange-500">
-                <p className="text-orange-600 text-[10px] font-black uppercase tracking-widest mb-1">UPI</p>
-                <p className="text-xl font-black text-slate-900">{formatCurrency(metrics.upiTotal)}</p>
-            </div>
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
-                <p className="text-indigo-600 text-[10px] font-black uppercase tracking-widest mb-1">Credit Card</p>
-                <p className="text-xl font-black text-slate-900">{formatCurrency(metrics.creditTotal)}</p>
-            </div>
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-violet-500">
-                <p className="text-violet-600 text-[10px] font-black uppercase tracking-widest mb-1">Debit Card</p>
-                <p className="text-xl font-black text-slate-900">{formatCurrency(metrics.debitTotal)}</p>
-            </div>
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
-                <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-1">Cash</p>
-                <p className="text-xl font-black text-slate-900">{formatCurrency(metrics.cashTotal)}</p>
-            </div>
+            <AppCard className="p-5 !rounded-lg border border-gray-100 bg-white" hoverEffect={false}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-orange-600 text-[10px] font-black uppercase tracking-widest mb-1">UPI</p>
+                    <p className="text-xl font-black text-gray-900">{formatCurrency(metrics.upiTotal)}</p>
+                  </div>
+                  <div className="p-2 bg-orange-50 rounded-md">
+                    <ICONS.Smartphone className="w-4 h-4 text-orange-600" />
+                  </div>
+                </div>
+            </AppCard>
+            <AppCard className="p-5 !rounded-lg border border-gray-100 bg-white" hoverEffect={false}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-blue-600 text-[10px] font-black uppercase tracking-widest mb-1">Credit Card</p>
+                    <p className="text-xl font-black text-gray-900">{formatCurrency(metrics.creditTotal)}</p>
+                  </div>
+                  <div className="p-2 bg-blue-50 rounded-md">
+                    <ICONS.Cards className="w-4 h-4 text-blue-600" />
+                  </div>
+                </div>
+            </AppCard>
+            <AppCard className="p-5 !rounded-lg border border-gray-100 bg-white" hoverEffect={false}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-violet-600 text-[10px] font-black uppercase tracking-widest mb-1">Debit Card</p>
+                    <p className="text-xl font-black text-gray-900">{formatCurrency(metrics.debitTotal)}</p>
+                  </div>
+                  <div className="p-2 bg-violet-50 rounded-md">
+                    <ICONS.Cards className="w-4 h-4 text-violet-600" />
+                  </div>
+                </div>
+            </AppCard>
+            <AppCard className="p-5 !rounded-lg border border-gray-100 bg-white" hoverEffect={false}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-1">Cash</p>
+                    <p className="text-xl font-black text-gray-900">{formatCurrency(metrics.cashTotal)}</p>
+                  </div>
+                  <div className="p-2 bg-emerald-50 rounded-md">
+                    <ICONS.Wallet className="w-4 h-4 text-emerald-600" />
+                  </div>
+                </div>
+            </AppCard>
          </div>
       </div>
 
-      {/* Ledger Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Transaction Ledger</h2>
-          <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1.5">Consolidated Spending Audit</p>
-        </div>
-        <div className="flex gap-4 w-full sm:w-auto">
-          <div className="relative group flex-1 sm:flex-initial">
-             <select 
-              value={filter} 
-              onChange={(e) => setFilter(e.target.value as any)}
-              className="w-full bg-white border border-slate-300 rounded-xl px-6 py-3.5 font-black text-[10px] uppercase tracking-widest outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 appearance-none pr-12 shadow-sm"
-            >
-              <option value="all">Full Record</option>
-              <option value="personal">Personal only</option>
-              <option value="other">Institutional</option>
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" /></svg>
-            </div>
+      {/* ACTION BAR */}
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+          {/* Search Bar */}
+          <div className="flex-1 w-full lg:w-auto">
+             <div className="relative">
+                <ICONS.Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input 
+                    type="text" 
+                    placeholder="Search transactions..." 
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-semibold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300"
+                />
+             </div>
           </div>
-              {selectedIds.size > 0 ? (
-                  <button onClick={handleBulkDelete} className="btn-secondary !bg-red-50 !text-red-500 !border-red-200 hover:!bg-red-100 !px-8 animate-in fade-in zoom-in duration-200">
-                    <ICONS.Trash className="w-4 h-4" />
-                    <span className="text-[10px] uppercase tracking-widest pl-2">Delete ({selectedIds.size})</span>
-                  </button>
-              ) : (
-                  <>
-                      <button onClick={() => {
-                        setShowAddForm(true);
-                        setEditingId(null);
-                        setAmount('');
-                        setDescription('');
-                        setIsPersonal(true);
-                      }} className="btn-primary !px-10 shadow-indigo-200">
-                    <ICONS.Plus className="w-4 h-4" />
-                    <span className="text-[10px] uppercase tracking-widest">Manual Entry</span>
-                  </button>
-                  
-                   <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileUpload} 
-                    accept=".csv" 
-                    className="hidden" 
-                  />
-                  <button onClick={() => fileInputRef.current?.click()} className="btn-secondary !px-8 ml-2">
-                    <span className="text-[10px] uppercase tracking-widest">Import CSV</span>
-                  </button>
-                  </>
-              )}
-        </div>
-      </div>
+          
+          {/* Filter & Actions */}
+          <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+             {/* Filter Dropdown */}
+             <div className="relative">
+                 <select 
+                    value={filter} 
+                    onChange={e => setFilter(e.target.value as any)}
+                    className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all"
+                >
+                    <option value="all">All Records</option>
+                    <option value="personal">Personal</option>
+                    <option value="other">Institutional</option>
+                 </select>
+                 <svg className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                 </svg>
+             </div>
 
-
-
-      {/* Search Bar */}
-      <div className="relative">
-          <input 
-              type="text" 
-              placeholder="Search transactions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-slate-700 placeholder:font-medium placeholder:text-slate-400"
-          />
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+             {/* Action Buttons */}
+             
+             {selectedIds.size > 0 ? (
+                <button
+                    onClick={handleBulkDelete}
+                    className="px-4 py-2.5 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 hover:border-red-300 rounded-lg text-xs font-bold flex items-center gap-2 transition-all active:scale-95"
+                >
+                    <ICONS.Trash className="w-3.5 h-3.5" />
+                    Delete ({selectedIds.size})
+                </button>
+             ) : (
+                <>
+                    <button 
+                        onClick={() => navigate('/expenses/import')}
+                        className="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 rounded-lg text-sm font-bold flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <span className="hidden sm:inline">Import</span>
+                    </button>
+                    <button
+                        onClick={() => {
+                            setShowAddForm(true);
+                            setEditingId(null);
+                            setAmount('');
+                            setDescription('');
+                            setIsPersonal(true);
+                        }}
+                        className="px-4 py-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-bold flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap"
+                    >
+                        <ICONS.Plus className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Add</span> Transaction
+                    </button>
+                </>
+             )}
           </div>
       </div>
 
@@ -449,10 +452,10 @@ const ExpenseManager: React.FC = () => {
         subtitle={editingId ? "Modify Transaction Details" : "Manual Transaction Logging"}
       >
         <form onSubmit={handleAddExpense} className="space-y-8">
-          <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 shadow-inner">
+          <div className="bg-gray-50 p-6 rounded-xl border-2 border-gray-100 shadow-inner">
             <label className="label-professional">Value (INR)</label>
             <div className="relative mt-2">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300 text-2xl">₹</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-300 text-2xl">₹</span>
                 <input 
                   required 
                   type="text" 
@@ -464,7 +467,7 @@ const ExpenseManager: React.FC = () => {
                         setAmount(val);
                     }
                   }} 
-                  className="input-professional !pl-10 !text-3xl font-black text-indigo-600 !py-4 !border-none !shadow-none bg-transparent" 
+                  className="input-professional !pl-10 !text-3xl font-black text-blue-600 !py-4 !border-none !shadow-none bg-transparent" 
                   placeholder="0.00" 
                 />
             </div>
@@ -516,14 +519,14 @@ const ExpenseManager: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex items-center gap-4 bg-indigo-50/70 p-5 rounded-2xl border border-indigo-100 group cursor-pointer" onClick={() => setIsPersonal(!isPersonal)}>
+          <div className="flex items-center gap-4 bg-blue-50/70 p-5 rounded-xl border border-blue-100 group cursor-pointer" onClick={() => setIsPersonal(!isPersonal)}>
             <input 
               type="checkbox" 
               checked={isPersonal} 
               onChange={e => setIsPersonal(e.target.checked)}
-              className="w-6 h-6 rounded-lg border-slate-300 text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 accent-indigo-600 cursor-pointer"
+              className="w-6 h-6 rounded-lg border-gray-300 text-blue-600 focus:ring-4 focus:ring-blue-500/10 accent-blue-600 cursor-pointer"
             />
-            <span className="text-xs font-black text-slate-700 select-none">Private / Personal Account Spend</span>
+            <span className="text-xs font-black text-gray-700 select-none">Private / Personal Account Spend</span>
           </div>
 
           <div>
@@ -531,88 +534,95 @@ const ExpenseManager: React.FC = () => {
             <input value={description} onChange={e => setDescription(e.target.value)} className="input-professional" placeholder="e.g. Weekly Starbucks or Server costs" />
           </div>
 
-          <div className="flex gap-4 pt-8 border-t border-slate-100 sticky bottom-0 bg-white pb-2">
-              <button type="button" onClick={() => {
+          <div className="flex gap-4 pt-8 border-t border-gray-100 sticky bottom-0 bg-white pb-2">
+              <AppButton 
+                variant="secondary"
+                type="button" 
+                onClick={() => {
                   setShowAddForm(false);
                   setEditingId(null);
-              }} className="flex-1 btn-secondary !py-4 uppercase tracking-widest text-[10px]">Discard</button>
-              <button 
+                }} 
+                className="flex-1 !py-4 uppercase tracking-widest text-[10px]"
+              >
+                  Discard
+              </AppButton>
+              <AppButton 
                 type="submit" 
                 disabled={!isValid}
-                className="flex-1 btn-primary !py-4 uppercase tracking-widest text-[10px] shadow-indigo-200"
+                className="flex-1 !py-4 uppercase tracking-widest text-[10px] shadow-blue-200"
               >
                 {editingId ? 'Update Entry' : 'Confirm Entry'}
-              </button>
+              </AppButton>
           </div>
         </form>
       </SidePopover>
 
       {/* Data Table */}
-      <div className="card-professional shadow-xl shadow-slate-200/50">
+      <AppCard className="shadow-xl shadow-gray-200/50">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr>
-                <th className="w-10 pl-6">
+              <tr className="border-b border-gray-200 bg-gray-50/80">
+                <th className="w-10 pl-6 py-4">
                     <input 
                         type="checkbox" 
                         checked={selectedIds.size > 0 && selectedIds.size === filteredExpenses.length}
                         onChange={toggleAll}
-                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 accent-indigo-600 cursor-pointer"
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-4 focus:ring-blue-500/10 accent-blue-600 cursor-pointer"
                     />
                 </th>
-                <th>Date</th>
-                <th>Channel</th>
-                <th>Type</th>
-                <th>Source/Card</th>
-                <th>Classification</th>
-                <th className="text-right">Value</th>
-                <th className="w-10"></th>
+                <th className="py-4 text-sm font-bold text-gray-900 text-left w-40">Date</th>
+                <th className="py-4 text-sm font-bold text-gray-900 text-left w-32">Channel</th>
+                <th className="py-4 text-sm font-bold text-gray-900 text-left w-32">Type</th>
+                <th className="py-4 text-sm font-bold text-gray-900 text-left">Source/Card</th>
+                <th className="py-4 text-sm font-bold text-gray-900 text-left">Classification</th>
+                <th className="py-4 text-sm font-bold text-gray-900 text-right">Value</th>
+                <th className="w-10 py-4"></th>
               </tr>
             </thead>
             <tbody className="bg-white">
-              {paginatedExpenses.length === 0 ? (
+              {filteredExpenses.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-24 text-center">
-                    <div className="text-slate-300 mb-4 flex justify-center">
+                    <div className="text-gray-300 mb-4 flex justify-center">
                        <ICONS.Expense className="w-12 h-12 opacity-20" />
                     </div>
-                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.3em]">No Transactions Found</p>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.3em]">No Transactions Found</p>
                   </td>
                 </tr>
               ) : (
-                paginatedExpenses.map((exp) => {
+                filteredExpenses.map((exp) => {
                   const expIsPersonal = exp.personalExpense ?? true;
                   const paymentParams = getPaymentParams(accounts.find(a => a.id === exp.accountId)?.type || exp.paymentMethod);
                   return (
-                    <tr key={exp.id} className={`hover:bg-indigo-50/20 transition-all group ${selectedIds.has(exp.id) ? 'bg-indigo-50/40' : ''}`}>
-                      <td className="pl-6">
+                    <tr key={exp.id} className={`hover:bg-gray-50/50 transition-all group ${selectedIds.has(exp.id) ? 'bg-blue-50/20' : 'border-b border-gray-100 last:border-0'}`}>
+                      <td className="pl-6 py-4">
                         <input 
                             type="checkbox" 
                             checked={selectedIds.has(exp.id)}
                             onChange={() => toggleSelection(exp.id)}
-                            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 accent-indigo-600 cursor-pointer"
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-4 focus:ring-blue-500/10 accent-blue-600 cursor-pointer"
                         />
                       </td>
-                      <td className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">
+                      <td className="font-semibold text-gray-900 text-xs tracking-wider py-4">
                         {new Date(exp.date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}
                       </td>
-                      <td>
-                        <span className={`text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border transition-all ${
+                      <td className="py-4">
+                        <span className={`text-[11px] font-medium px-4 py-1.5 rounded-full tracking-wide border transition-all whitespace-nowrap ${
                           expIsPersonal 
-                            ? 'bg-indigo-50 text-indigo-700 border-indigo-100' 
-                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                            ? 'bg-blue-50 text-blue-700 border-blue-100' 
+                            : 'bg-gray-50 text-gray-600 border-gray-200'
                         }`}>
                           {expIsPersonal ? 'Personal' : 'External'}
                         </span>
                       </td>
-                       <td>
-                        <span className={`text-[9px] font-black px-3 py-1 rounded-md uppercase tracking-widest border ${paymentParams.style}`}>
+                       <td className="py-4">
+                        <span className={`text-[11px] font-medium px-3 py-1 rounded-md tracking-wide border whitespace-nowrap ${paymentParams.style}`}>
                           {paymentParams.label}
                         </span>
                       </td>
-                      <td>
-                        <span className="text-[10px] font-bold text-slate-700">
+                      <td className="py-4">
+                        <span className="text-xs font-semibold text-gray-900">
                            {/* Logic: If Cash, show '-', else show Account Nickname/Name */}
                            {(accounts.find(a => a.id === exp.accountId)?.type === 'cash' || exp.paymentMethod === 'cash') 
                                 ? '-' 
@@ -620,30 +630,30 @@ const ExpenseManager: React.FC = () => {
                            }
                         </span>
                       </td>
-                      <td>
+                      <td className="py-4">
                         <div className="flex flex-col">
-                           <p className="font-black text-slate-900 text-base group-hover:text-indigo-600 transition-colors">
+                           <p className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">
                             {categories.find(c => c.id === exp.categoryId)?.name || 'Misc'}
                           </p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase truncate max-w-[300px] mt-1.5">
+                          <p className="text-xs text-gray-400 truncate max-w-[300px] mt-1">
                             {exp.description || 'Verified entry'}
                           </p>
                         </div>
                       </td>
-                      <td className="text-right font-black text-slate-900 text-base">
+                      <td className="text-right font-semibold text-gray-900 text-sm py-4">
                         {formatCurrency(exp.amount, 2)}
                       </td>
-                      <td className="text-right pl-4">
-                        <div className="flex justify-end gap-2 transition-opacity">
+                      <td className="text-right pl-4 py-4 pr-6">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button 
                                 onClick={() => handleEdit(exp)}
-                                className="p-2 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
+                                className="p-2 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-lg transition-colors"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
                             <button 
                                 onClick={() => handleDelete(exp.id)}
-                                className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
+                                className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
                             >
                                 <ICONS.Trash className="w-4 h-4" />
                             </button>
@@ -656,32 +666,10 @@ const ExpenseManager: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </AppCard>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-6 py-4 bg-white rounded-2xl shadow-sm border border-slate-100">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Page <span className="text-indigo-600">{currentPage}</span> of {totalPages}
-            </p>
-            <div className="flex gap-2">
-                <button 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="btn-secondary !py-2 !px-4 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                    Prev
-                </button>
-                <button 
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="btn-secondary !py-2 !px-4 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                    Next
-                </button>
-            </div>
-        </div>
-      )}
+
+
     </div>
   );
 };

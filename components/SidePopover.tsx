@@ -8,9 +8,10 @@ interface SidePopoverProps {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  width?: 'default' | 'wide'; // default = max-w-xl, wide = w-3/4
 }
 
-const SidePopover: React.FC<SidePopoverProps> = ({ isOpen, onClose, title, subtitle, children }) => {
+const SidePopover: React.FC<SidePopoverProps> = ({ isOpen, onClose, title, subtitle, children, width = 'default' }) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -27,6 +28,8 @@ const SidePopover: React.FC<SidePopoverProps> = ({ isOpen, onClose, title, subti
 
   if (!visible && !isOpen) return null;
 
+  const widthClass = width === 'wide' ? 'w-3/4' : 'w-full max-w-xl';
+
   return (
     <div className={`fixed inset-0 z-[100] flex justify-end transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
       {/* Backdrop */}
@@ -37,7 +40,7 @@ const SidePopover: React.FC<SidePopoverProps> = ({ isOpen, onClose, title, subti
 
       {/* Drawer */}
       <div 
-        className={`relative w-full max-w-xl bg-white h-full shadow-2xl flex flex-col transition-transform duration-300 ease-out border-l border-slate-100 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`relative ${widthClass} bg-white h-full shadow-2xl flex flex-col transition-transform duration-300 ease-out border-l border-slate-100 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-slate-50">

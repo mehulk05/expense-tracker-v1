@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { Expense, Account, Category, AccountType } from '../types';
+import { Expense, Account, Category, AccountType, ImportedExpense } from '../types';
 import { storage } from '../services/storage';
 
 interface CsvRow {
@@ -183,3 +183,154 @@ export const parseAndSaveCsvData = async (
         });
     });
 };
+
+/**
+ * Parse CSV file for preview without saving to database
+ * Returns array of ImportedExpense objects with validation status
+ */
+export const parseCsvForPreview = async (
+    file: File,
+    currentAccounts: Account[],
+    currentCategories: Category[]
+): Promise<{ expenses: ImportedExpense[]; hasErrors: boolean }> => {
+    return new Promise((resolve) => {
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (results) => {
+                const rows = results.data as CsvRow[];
+                const expenses: ImportedExpense[] = [];
+                let hasErrors = false;
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row.Date && !row.Amount) continue; // Skip completely empty rows
+
+                    try {
+                        // Parse Date
+                        const dateObj = new Date(row.Date);
+                        if (isNaN(dateObj.getTime())) {
+                            throw new Error(`Invalid date: ${row.Date}`);
+                        }
+
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        const date = `${year}-${month}-${day}`;
+
+                        // Parse Amount
+                        const cleanAmount = typeof row.Amount === 'string' ? row.Amount.replace(/[₹,]/g, '') : row.Amount;
+                        const amount = parseFloat(cleanAmount);
+                        if (isNaN(amount) || amount <= 0) {
+                            throw new Error('Invalid amount');
+                        }
+
+                        // Determine Personal/Other
+                        const isPersonal = row['Personal/Other']?.toLowerCase() === 'personal';
+
+                        // Determine Payment Method
+                        let paymentMethod: AccountType = 'upi';
+                        const paidFrom = row['Paid from']?.toLowerCase();
+                        if (paidFrom === 'credit') paymentMethod = 'credit';
+                        else if (paidFrom === 'debit') paymentMethod = 'debit';
+                        else if (paidFrom === 'cash') paymentMethod = 'cash';
+                        else if (paidFrom === 'upi') paymentMethod = 'upi';
+
+                        const bankName = row['Bank/Card']?.trim() || 'Cash';
+                        const isCash = paymentMethod === 'cash';
+
+                        // Find Account
+                        let accountId = '';
+                        let validationError = '';
+
+                        if (isCash) {
+                            const cashAcc = currentAccounts.find(acc => acc.type === 'cash');
+                            if (cashAcc) {
+                                accountId = cashAcc.id;
+                            } else {
+                                // Will auto-create on save
+                                accountId = 'cash-placeholder';
+                            }
+                        } else {
+                            if (!bankName) {
+                                validationError = 'Bank/Card name is required for non-cash payments';
+                                hasErrors = true;
+                            } else {
+                                const existingAccount = currentAccounts.find(
+                                    acc => acc.nickname?.toLowerCase() === bankName.toLowerCase() && acc.type === paymentMethod
+                                );
+                                if (existingAccount) {
+                                    accountId = existingAccount.id;
+                                } else {
+                                    validationError = `No account found with nickname "${bankName}" for type "${paidFrom}"`;
+                                    hasErrors = true;
+                                    accountId = 'invalid-account';
+                                }
+                            }
+                        }
+
+                        // Find Category
+                        const typeStr = row.Type?.trim();
+                        let categoryId = '';
+
+                        if (typeStr) {
+                            const categoryWithSub = currentCategories.find(c =>
+                                c.subCategories?.some(sub => sub.toLowerCase() === typeStr.toLowerCase())
+                            );
+
+                            if (categoryWithSub) {
+                                categoryId = categoryWithSub.id;
+                            } else {
+                                const categoryByName = currentCategories.find(c => c.name.toLowerCase() === typeStr.toLowerCase());
+                                categoryId = categoryByName ? categoryByName.id : (
+                                    currentCategories.find(c => c.type === (isPersonal ? 'personal' : 'other'))?.id || currentCategories[0]?.id || ''
+                                );
+                            }
+                        } else {
+                            categoryId = currentCategories.find(c => c.type === (isPersonal ? 'personal' : 'other'))?.id || currentCategories[0]?.id || '';
+                        }
+
+                        // Create ImportedExpense Object
+                        const importedExpense: ImportedExpense = {
+                            id: crypto.randomUUID(),
+                            amount,
+                            date,
+                            accountId,
+                            categoryId,
+                            personalExpense: isPersonal,
+                            paymentMethod,
+                            description: row['Reason/Spent On'] || row['Type'] || 'Imported Expense',
+                            validationError,
+                            originalRow: i + 2 // +2 because row 1 is header, and we're 0-indexed
+                        };
+
+                        expenses.push(importedExpense);
+
+                    } catch (err: any) {
+                        hasErrors = true;
+                        // Create a placeholder expense with error
+                        const importedExpense: ImportedExpense = {
+                            id: crypto.randomUUID(),
+                            amount: 0,
+                            date: new Date().toISOString().split('T')[0],
+                            accountId: '',
+                            categoryId: currentCategories[0]?.id || '',
+                            personalExpense: true,
+                            paymentMethod: 'upi',
+                            description: row['Reason/Spent On'] || 'Error in import',
+                            validationError: err.message,
+                            originalRow: i + 2
+                        };
+                        expenses.push(importedExpense);
+                    }
+                }
+
+                resolve({ expenses, hasErrors });
+            },
+            error: (err) => {
+                resolve({ expenses: [], hasErrors: true });
+            }
+        });
+    });
+};
+

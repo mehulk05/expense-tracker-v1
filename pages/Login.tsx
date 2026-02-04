@@ -37,48 +37,48 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
-      <div className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 overflow-hidden border border-slate-200 transform transition-all hover:shadow-indigo-900/20">
-        <div className="p-12 md:p-16">
-          <div className="flex flex-col items-center mb-16">
-            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-3xl mb-6 shadow-xl shadow-indigo-400/30">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-gray-200/50 overflow-hidden border border-gray-100">
+        <div className="p-8 md:p-10">
+          <div className="flex flex-col items-center mb-10">
+            <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl mb-4 shadow-lg shadow-blue-200">
               S
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">SpendWise</h1>
-            <p className="text-slate-400 mt-3 text-[10px] font-black uppercase tracking-[0.4em]">Financial Command Center</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">SpendWise</h1>
+            <p className="text-gray-500 mt-2 text-sm font-medium">Financial Command Center</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div className="animate-in slide-in-from-top-4 duration-300">
-                <label className="label-professional">Identity</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Identity</label>
                 <input 
                   type="text" required value={name} onChange={e => setName(e.target.value)}
-                  className="input-professional !py-4"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm font-medium"
                   placeholder="Your Full Name"
                 />
               </div>
             )}
             <div>
-              <label className="label-professional">Email Access</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Email Access</label>
               <input 
                 type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                className="input-professional !py-4"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm font-medium"
                 placeholder="identity@spendwise.com"
               />
             </div>
             <div>
-              <label className="label-professional">Secret Key</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Secret Key</label>
               <input 
                 type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                className="input-professional !py-4"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm font-medium"
                 placeholder="••••••••"
               />
             </div>
 
             {error && (
-              <div className="text-rose-600 text-[11px] font-bold bg-rose-50 p-4 rounded-xl border border-rose-200 flex items-center gap-3">
-                 <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+              <div className="text-red-600 text-xs font-bold bg-red-50 p-3 rounded-xl border border-red-100 flex items-center gap-2">
+                 <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
                  {error}
               </div>
             )}
@@ -86,16 +86,16 @@ const Login: React.FC = () => {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full btn-primary !py-5 text-xs uppercase tracking-[0.2em] shadow-indigo-300 active:scale-95"
+              className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 disabled:opacity-70"
             >
               {loading ? 'Authorizing...' : (isLogin ? 'Establish Session' : 'Register Profile')}
             </button>
           </form>
 
-          <div className="mt-12 text-center">
+          <div className="mt-8 text-center">
             <button 
               onClick={() => setIsLogin(!isLogin)}
-              className="text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-indigo-600 transition-colors py-2 px-4 rounded-lg hover:bg-slate-50"
+              className="text-gray-500 font-bold text-xs uppercase tracking-wide hover:text-blue-600 transition-colors py-2 px-4 rounded-lg hover:bg-gray-50"
             >
               {isLogin ? "Initialize New User" : 'Return to Login Gateway'}
             </button>

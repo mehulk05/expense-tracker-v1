@@ -16,6 +16,7 @@ import GroupsManager from './pages/splitwise/GroupsManager';
 import Login from './pages/Login';
 import TodoApp from './pages/todo/TodoApp';
 import PlannedExpensesApp from './pages/planned/PlannedExpensesApp';
+import CsvImportPage from './pages/CsvImportPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -36,6 +37,14 @@ const App: React.FC = () => {
                 <Layout><Dashboard /></Layout>
               </ProtectedRoute>
             } 
+          />
+          <Route 
+             path="/expenses/import" 
+             element={
+               <ProtectedRoute>
+                 <CsvImportPage />
+               </ProtectedRoute>
+             } 
           />
           <Route 
             path="/expenses" 
@@ -117,6 +126,7 @@ const App: React.FC = () => {
                </ProtectedRoute>
              } 
           />
+
 
 
 
