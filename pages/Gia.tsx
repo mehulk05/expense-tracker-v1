@@ -8,6 +8,7 @@ const GiaImprovedUX = () => {
   const [configDrawerOpen, setConfigDrawerOpen] = useState(false);
   const [activeConfigSection, setActiveConfigSection] = useState(null);
   const [activeKnowledgeTab, setActiveKnowledgeTab] = useState('coverage');
+  const [isEditMode, setIsEditMode] = useState(false);
   const [configurationStatus, setConfigurationStatus] = useState({
     communication: true,
     availability: false,
@@ -396,103 +397,174 @@ const GiaImprovedUX = () => {
 
   // DASHBOARD
   const Dashboard = () => (
-    <div className="space-y-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Hero */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-8 text-white mb-8 shadow-lg">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-                <Zap className="w-9 h-9 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold">GIA Assistant</h1>
-                  <span className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-medium">Active</span>
-                </div>
-                <p className="text-blue-100 text-lg">Handling conversations 24/7</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setActiveTopTab('configuration')}
-              className="px-5 py-2.5 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
-            >
-              Configure
-            </button>
-          </div>
+    <div className="space-y-10">
+        {/* Hero Section */}
+        <div className="text-center py-10 px-4">
+           {/* Status Badge */}
+           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold mb-6 animate-fade-in-up">
+              <CheckCircle className="w-4 h-4" />
+              GIA Configuration Ready
+           </div>
+
+           <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Zap className="w-8 h-8 text-blue-600" />
+           </div>
+           <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">Meet GIA, Your AI Assistant</h1>
+           <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-8 leading-relaxed">
+             Gia automates patient communication, answers questions instantly, and converts leads into bookings—24/7, without skipping a beat.
+           </p>
+           <button 
+             onClick={() => setActiveTopTab('configuration')}
+             className="px-8 py-3.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-200 flex items-center gap-2 mx-auto"
+           >
+             {isEditMode ? 'Manage Configuration' : 'Get Started'}
+             <ChevronRight className="w-4 h-4" />
+           </button>
         </div>
 
-        {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            { label: 'Conversations', value: '1,234', icon: MessageSquare },
-            { label: 'Bookings', value: '89', icon: Calendar },
-            { label: 'FAQ Hits', value: '456', icon: BookOpen },
-            { label: 'Response Time', value: '2.3s', icon: Zap }
-          ].map((metric, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <metric.icon className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 mb-1">{metric.label}</p>
-              <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
+        {/* Features Capabilities */}
+        <div>
+          <div className="flex items-center gap-4 mb-8">
+            <h2 className="text-xl font-bold text-gray-900">Core Capabilities</h2>
+            <div className="h-px bg-gray-200 flex-1"></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
+               <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
+                  <Clock className="w-5 h-5 text-indigo-600" />
+               </div>
+               <h3 className="text-lg font-bold text-gray-900 mb-2">Always Available</h3>
+               <p className="text-sm text-gray-500 leading-relaxed">
+                 Gia responds instantly to every text, email, and Instagram message—day or night, weekends and holidays included.
+               </p>
             </div>
-          ))}
+
+            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
+               <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
+                  <Lightbulb className="w-5 h-5 text-emerald-600" />
+               </div>
+               <h3 className="text-lg font-bold text-gray-900 mb-2">Smart from Day One</h3>
+               <p className="text-sm text-gray-500 leading-relaxed">
+                 She already knows your practice inside and out, trained on your website content and conversation history to provide accurate responses.
+               </p>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
+               <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+               </div>
+               <h3 className="text-lg font-bold text-gray-900 mb-2">Seamless Collaboration</h3>
+               <p className="text-sm text-gray-500 leading-relaxed">
+                 When a conversation needs a human touch, Gia smoothly hands off to your staff right within your Growth99 Inbox.
+               </p>
+            </div>
+
+             <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
+               <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors">
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+               </div>
+               <h3 className="text-lg font-bold text-gray-900 mb-2">Converts to Action</h3>
+               <p className="text-sm text-gray-500 leading-relaxed">
+                 Gia naturally gathers contact details during conversations and shares relevant booking information with prospects at just the right moment.
+               </p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
   );
 
   // CONFIGURATION
   const Configuration = () => (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Setup Configuration</h1>
-        <p className="text-gray-600 text-lg">Manage GIA's settings and behavior for your practice.</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Setup Configuration</h1>
+          <p className="text-gray-500 text-sm">Follow the steps to get GIA ready for your practice.</p>
+        </div>
+        <div className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-100">
+           {Math.round((configurationCards.filter(c => c.configured).length / configurationCards.length) * 100)}% Completed
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Stepper Flow - Compact */}
+      <div className="relative mb-8 px-4 hidden md:block">
+        {/* Progress Bar Background */}
+        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 z-0 rounded-full"></div>
+        {/* Active Progress Bar */}
+        <div 
+          className="absolute top-1/2 left-0 h-0.5 bg-blue-600 -translate-y-1/2 z-0 rounded-full transition-all duration-700"
+          style={{ width: `${(configurationCards.filter(c => c.configured).length / (configurationCards.length - 1)) * 100}%` }}
+        ></div>
+
+        <div className="relative z-10 flex justify-between">
+          {configurationCards.map((card, idx) => {
+             const isCompleted = card.configured;
+             const isNext = !isCompleted && (idx === 0 || configurationCards[idx - 1].configured);
+
+             return (
+               <div key={card.id} className="flex flex-col items-center group cursor-pointer" onClick={() => openConfigDrawer(card.id)}>
+                 <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 z-10 ${
+                   isCompleted ? 'bg-blue-600 border-blue-50 text-white shadow-md' :
+                   isNext ? 'bg-white border-blue-600 text-blue-600 shadow-sm ring-2 ring-blue-50' :
+                   'bg-white border-gray-200 text-gray-300'
+                 }`}>
+                   {isCompleted ? <Check className="w-4 h-4" /> : <span className="font-bold text-xs">{card.step}</span>}
+                 </div>
+                 <div className="absolute top-10 text-center w-24 transition-all duration-300 opacity-0 group-hover:opacity-100">
+                   <p className="text-[10px] font-bold text-gray-700 bg-white px-2 py-1 rounded shadow-sm border border-gray-100">{card.title}</p>
+                 </div>
+               </div>
+             );
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
         {configurationCards.map((card) => (
           <button
             key={card.id}
             onClick={() => openConfigDrawer(card.id)}
-            className="group relative flex flex-col items-start p-6 bg-white rounded-2xl border border-gray-200 hover:border-blue-500 hover:shadow-xl transition-all duration-300 text-left h-full"
+            className="group relative flex flex-col items-start p-5 bg-white rounded-xl border border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all duration-300 text-left h-full"
           >
-            <div className={`p-3 rounded-xl ${card.configured ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600'} transition-colors mb-4`}>
-              <card.icon className="w-8 h-8" />
+            <div className="flex items-start justify-between w-full mb-4">
+               <div className={`p-2.5 rounded-lg ${card.configured ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600'} transition-colors`}>
+                 <card.icon className="w-6 h-6" />
+               </div>
+               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-500 border border-gray-200">
+                  {card.step}
+               </span>
             </div>
             
-            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+            <h3 className="text-base font-bold text-gray-900 mb-1.5 group-hover:text-blue-600 transition-colors">
               {card.title}
             </h3>
             
-            <p className="text-gray-500 text-sm mb-6 line-clamp-2">
+            <p className="text-gray-500 text-xs mb-5 line-clamp-2 leading-relaxed">
               {card.description}
             </p>
 
             <div className="mt-auto flex items-center justify-between w-full">
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
                 card.configured 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-gray-100 text-gray-500'
+                  ? 'bg-green-50 text-green-700 border border-green-100' 
+                  : 'bg-gray-50 text-gray-500 border border-gray-100'
               }`}>
                 {card.configured ? (
                   <>
-                    <CheckCircle className="w-3.5 h-3.5" />
+                    <CheckCircle className="w-3 h-3" />
                     Configured
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    Not Configured
+                    <AlertCircle className="w-3 h-3" />
+                    Pending
                   </>
                 )}
               </span>
               
-              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
-                <ChevronRight className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </div>
           </button>
@@ -1280,6 +1352,17 @@ const GiaImprovedUX = () => {
                   <p className="text-xs text-gray-500">Growth99 Intelligent Assistant</p>
                 </div>
               </div>
+              
+              {/* Edit Mode Toggle */}
+              <div className="flex items-center gap-3">
+                 <span className={`text-sm font-medium ${isEditMode ? 'text-gray-900' : 'text-gray-500'}`}>Edit Mode</span>
+                 <button 
+                   onClick={() => setIsEditMode(!isEditMode)}
+                   className={`relative w-11 h-6 rounded-full transition-colors ${isEditMode ? 'bg-blue-600' : 'bg-gray-200'}`}
+                 >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform ${isEditMode ? 'translate-x-5' : 'translate-x-0'}`} />
+                 </button>
+              </div>
             </div>
             
             {/* Tabs */}
@@ -1288,7 +1371,7 @@ const GiaImprovedUX = () => {
                 <button 
                   key={tab.id}
                   onClick={() => setActiveTopTab(tab.id)}
-                  className={`px-5 py-3 border-b-2 font-medium transition-all flex items-center gap-2 ${
+                  className={`px-5 py-3 border-b-2 text-sm font-medium transition-all flex items-center gap-2 ${
                     activeTopTab === tab.id 
                       ? 'border-blue-600 text-blue-600 bg-blue-50' 
                       : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
