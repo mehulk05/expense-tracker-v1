@@ -12,10 +12,43 @@ const GiaImprovedUX = () => {
   const [configurationStatus, setConfigurationStatus] = useState({
     communication: true,
     availability: false,
+    booking: false,
     training: false,
     faqs: false,
-    connections: true
   });
+  
+  // FAQ Management State
+  const [localFaqs, setLocalFaqs] = useState([
+    { id: 1, question: 'How do I book an appointment?', answer: 'You can book an appointment by calling us at (555) 123-4567 or using our online booking system.' },
+    { id: 2, question: 'What is your cancellation policy?', answer: 'We require 24 hours notice for cancellations to avoid a cancellation fee.' },
+    { id: 3, question: 'Do you accept insurance?', answer: 'Yes, we accept most major insurance plans including Blue Cross, Aetna, and United Healthcare.' }
+  ]);
+  const [isAddingFaq, setIsAddingFaq] = useState(false);
+  const [editingFaqId, setEditingFaqId] = useState(null);
+  const [faqForm, setFaqForm] = useState({ question: '', answer: '' });
+
+  const handleSaveFaq = () => {
+    if (editingFaqId) {
+      setLocalFaqs(localFaqs.map(f => f.id === editingFaqId ? { ...f, ...faqForm } : f));
+      setEditingFaqId(null);
+    } else {
+      setLocalFaqs([...localFaqs, { id: Date.now(), ...faqForm }]);
+      setIsAddingFaq(false);
+    }
+    setFaqForm({ question: '', answer: '' });
+  };
+
+  const startEditFaq = (faq) => {
+    setEditingFaqId(faq.id);
+    setFaqForm({ question: faq.question, answer: faq.answer });
+    setIsAddingFaq(true); 
+  };
+
+  const handleDeleteFaq = (id) => {
+    setLocalFaqs(localFaqs.filter(f => f.id !== id));
+  };
+  
+  const [bookingMode, setBookingMode] = useState('direct'); // 'direct' or 'request'
 
   // Top tabs
   const topTabs = [
@@ -50,8 +83,19 @@ const GiaImprovedUX = () => {
       priority: 'Required'
     },
     {
-      id: 'training',
+      id: 'booking',
       step: 3,
+      title: 'Booking',
+      description: 'Configure how GIA handles appointment scheduling and hands off booking requests',
+      icon: Calendar,
+      iconBg: 'bg-slate-100',
+      iconColor: 'text-slate-700',
+      configured: configurationStatus.booking,
+      priority: 'Important'
+    },
+    {
+      id: 'training',
+      step: 4,
       title: 'GIA Knowledge Sources',
       description: 'Upload practice documents, website links, and other content for GIA to learn from',
       icon: FileText,
@@ -62,7 +106,7 @@ const GiaImprovedUX = () => {
     },
     {
       id: 'faqs',
-      step: 4,
+      step: 5,
       title: 'GIA\'s Answers',
       description: 'Teach GIA how to answer common questions about appointments, pricing, and policies',
       icon: HelpCircle,
@@ -70,31 +114,20 @@ const GiaImprovedUX = () => {
       iconColor: 'text-slate-700',
       configured: configurationStatus.faqs,
       priority: 'Important'
-    },
-    {
-      id: 'connections',
-      step: 5,
-      title: 'Connections',
-      description: 'Connect booking systems, calendar, and manage team handoff settings',
-      icon: Settings,
-      iconBg: 'bg-slate-100',
-      iconColor: 'text-slate-700',
-      configured: configurationStatus.connections,
-      priority: 'Optional'
     }
   ];
 
   const openConfigDrawer = (sectionId) => {
-    if (sectionId === 'training') {
-      setActiveTopTab('knowledge');
-      setActiveKnowledgeTab('sources');
-      return;
-    }
-    if (sectionId === 'faqs') {
-      setActiveTopTab('knowledge');
-      setActiveKnowledgeTab('faq');
-      return;
-    }
+    // if (sectionId === 'training') {
+    //   setActiveTopTab('knowledge');
+    //   setActiveKnowledgeTab('sources');
+    //   return;
+    // }
+    // if (sectionId === 'faqs') {
+    //   setActiveTopTab('knowledge');
+    //   setActiveKnowledgeTab('faq');
+    //   return;
+    // }
     setActiveConfigSection(sectionId);
     setConfigDrawerOpen(true);
   };
@@ -112,54 +145,94 @@ const GiaImprovedUX = () => {
     switch(activeConfigSection) {
       case 'communication':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Communication Settings</h3>
-              <p className="text-sm text-gray-600">Customize how GIA communicates with patients</p>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Choose Gia's conversational tone and style.</h3>
+              <p className="text-sm text-gray-500">Choose Gia's communication voice, or the personality she tries to embody as she communicates</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-8">
+              {/* Employee Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Communication Tone</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>Professional & Warm</option>
-                  <option>Friendly & Casual</option>
-                  <option>Formal & Clinical</option>
-                  <option>Empathetic & Supportive</option>
-                </select>
+                <label className="block text-sm font-bold text-gray-900 mb-2">What would you like to call your AI employee?</label>
+                <input 
+                  type="text" 
+                  defaultValue="GIA"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
+                  placeholder="e.g. Sarah"
+                />
               </div>
 
+              {/* Communication Tone Slider */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Response Style</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Concise', 'Balanced', 'Detailed'].map(opt => (
-                    <button key={opt} className={`px-3 py-2 border-2 rounded-lg text-sm font-medium transition-all ${
-                      opt === 'Balanced' 
-                        ? 'border-blue-600 bg-blue-50 text-blue-700' 
-                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                    }`}>
-                      {opt}
-                    </button>
+                 <div className="flex items-center justify-between mb-4">
+                    <label className="text-sm font-bold text-gray-900">Communication Tone</label>
+                 </div>
+                 <div className="px-2">
+                    <div className="flex justify-between text-xs text-gray-500 font-medium mb-2">
+                      <span>Formal</span>
+                      <span>Casual</span>
+                    </div>
+                    <div className="relative h-1.5 bg-blue-100 rounded-full mb-2">
+                       <div className="absolute top-1/2 -translate-y-1/2 right-[30%] w-5 h-5 bg-white border-2 border-blue-600 rounded-full shadow cursor-pointer hover:scale-110 transition-transform"></div>
+                    </div>
+                     <div className="flex justify-between text-xs text-gray-400 mt-2">
+                      <span>Formal, Professional tone</span>
+                      <span>Casual, Conversational tone</span>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Communication Voice Cards */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-3">Communication Voice</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { title: 'Professional', desc: 'Clear, concise, and business-focused', active: false },
+                    { title: 'Neutral', desc: 'Balanced and adaptable to various situations', active: false },
+                    { title: 'Friendly', desc: 'Warm and approachable while remaining professional', active: true }
+                  ].map((voice) => (
+                    <div 
+                      key={voice.title} 
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        voice.active 
+                          ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' 
+                          : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                      }`}
+                    >
+                      <p className="font-bold text-gray-900 mb-1">{voice.title}</p>
+                      <p className="text-xs text-gray-500 leading-relaxed">{voice.desc}</p>
+                    </div>
                   ))}
                 </div>
               </div>
 
+               {/* Primary Language */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Welcome Message</label>
-                <textarea 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                  rows="3"
-                  placeholder="Hi! I'm GIA, your virtual assistant. How can I help you today?"
-                />
-              </div>
+                <label className="block text-sm font-bold text-gray-900 mb-3">Primary Language</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {/* English US */}
+                    <div className="p-4 rounded-xl border-2 border-blue-600 bg-blue-50 cursor-pointer relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-1.5 bg-blue-600 rounded-bl-xl">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                         <Globe className="w-4 h-4 text-blue-700" />
+                         <span className="font-bold text-gray-900">English (US)</span>
+                      </div>
+                      <p className="text-xs text-gray-500 ml-6">American English dialect and terminology</p>
+                    </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>Multilingual (Auto-detect)</option>
-                </select>
+                    {/* Spanish */}
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 cursor-not-allowed">
+                      <div className="flex items-center gap-2 mb-1">
+                         <Globe className="w-4 h-4 text-gray-400" />
+                         <span className="font-bold text-gray-400">Spanish</span>
+                         <span className="px-2 py-0.5 bg-gray-200 text-gray-500 text-[10px] font-bold rounded-full uppercase tracking-wide">Coming Soon</span>
+                      </div>
+                      <p className="text-xs text-gray-400 ml-6">Other language support</p>
+                    </div>
+                </div>
               </div>
             </div>
           </div>
@@ -167,47 +240,83 @@ const GiaImprovedUX = () => {
 
       case 'availability':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Availability Settings</h3>
-              <p className="text-sm text-gray-600">Define when GIA actively responds to patients</p>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Availability</h3>
+              <p className="text-sm text-gray-500">Configure when GIA responds to inbound communications</p>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div>
-                  <p className="font-medium text-gray-900">24/7 Availability</p>
-                  <p className="text-sm text-gray-600">GIA responds anytime</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+              {/* Response Mode Selection */}
+              <div className="space-y-3">
+                 {/* Respond Immediately */}
+                 <div className="flex items-start gap-3 p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 transition-colors cursor-pointer">
+                    <div className="mt-0.5 w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center"></div>
+                    <div>
+                       <p className="text-sm font-bold text-gray-900">Respond Immediately</p>
+                       <p className="text-xs text-gray-500 mt-0.5">Configure how GIA collects and manages appointment requests from patient</p>
+                    </div>
+                 </div>
+
+                 {/* Respond if No One Replies */}
+                 <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 transition-colors cursor-pointer">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center"></div>
+                      <div>
+                         <p className="text-sm font-bold text-gray-900">Respond if No One Replies Within</p>
+                         <p className="text-xs text-gray-500 mt-0.5">GIA only responds after the selected delay if there's no human response.</p>
+                      </div>
+                    </div>
+                    <select className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 outline-none focus:border-blue-500 bg-gray-50">
+                       <option>2 Minutes</option>
+                       <option>5 Minutes</option>
+                       <option>10 Minutes</option>
+                    </select>
+                 </div>
+
+                 {/* Respond at certain times */}
+                 <div className="flex items-start gap-3 p-4 bg-white border-2 border-blue-100 rounded-xl cursor-pointer ring-1 ring-blue-100">
+                    <div className="mt-0.5 w-5 h-5 rounded-full border-4 border-blue-600 flex items-center justify-center bg-white"></div>
+                    <div>
+                       <p className="text-sm font-bold text-gray-900">Respond at certain times</p>
+                       <p className="text-xs text-gray-500 mt-0.5">GIA only responds during specific days or time windows you configure.</p>
+                    </div>
+                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Business Hours</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Opens</label>
-                    <input type="time" className="w-full px-3 py-2 border border-gray-300 rounded-lg" defaultValue="09:00" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Closes</label>
-                    <input type="time" className="w-full px-3 py-2 border border-gray-300 rounded-lg" defaultValue="17:00" />
-                  </div>
-                </div>
+              {/* Day Scheduler */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                 <p className="text-sm font-bold text-gray-900 mb-4">Select the days and times</p>
+                 <div className="space-y-3">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                       <div key={day} className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 w-32">
+                             <div className={`w-9 h-5 rounded-full p-0.5 transition-colors ${day === 'Saturday' || day === 'Sunday' ? 'bg-gray-200' : 'bg-gray-200'}`}>
+                                <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                             </div>
+                             <span className="text-sm font-medium text-gray-700">{day}</span>
+                          </div>
+                          <div className="flex-1 bg-gray-50 rounded-lg px-4 py-2.5 border border-transparent">
+                             <span className="text-sm text-gray-400 font-medium">Closed</span>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Active Days</label>
-                <div className="grid grid-cols-7 gap-2">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                    <button key={day} className="px-2 py-2 border-2 border-blue-600 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-xs font-medium">
-                      {day}
-                    </button>
-                  ))}
-                </div>
+              {/* Missed Call Follow-up */}
+              <div className="pt-6 border-t border-gray-100">
+                 <h4 className="text-sm font-bold text-gray-900 mb-2">Missed Call Follow-up</h4>
+                 <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                   Gia can automatically send an SMS follow-up when a call goes unanswered when using Growth99 call tracking.
+                 </p>
+                 <div className="flex items-center gap-3">
+                    <div className="w-11 h-6 bg-blue-100 rounded-full p-1 cursor-pointer">
+                       <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                    </div>
+                    <span className="text-sm font-bold text-gray-900">Follow up via SMS</span>
+                    <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wide">Coming Soon</span>
+                 </div>
               </div>
             </div>
           </div>
@@ -215,66 +324,82 @@ const GiaImprovedUX = () => {
 
       case 'training':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Document Training</h3>
-              <p className="text-sm text-gray-600">Upload documents to train GIA about your practice</p>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Knowledge Base (Optional)</h3>
+              <p className="text-sm text-gray-500">
+                Help Gia have more context about your business by uploading some documents. This could include information like: your booking or cancellation policies, service offerings, pricing, current or ongoing promotions, etc.
+              </p>
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Upload Documents</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
-                  <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 mb-1 font-medium">Click to upload or drag and drop</p>
-                  <p className="text-xs text-gray-500">PDF, DOCX, TXT, CSV (Max 10MB per file)</p>
-                  <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-                    Browse Files
-                  </button>
-                </div>
+              <h4 className="text-sm font-bold text-gray-900">Knowledge Sources</h4>
+              
+              {/* Drag & Drop Area */}
+              <div className="border-2 border-dashed border-blue-200 rounded-xl bg-blue-50 p-8 text-center hover:border-blue-400 transition-colors cursor-pointer group">
+                  <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-slate-200">
+                    <Upload className="w-6 h-6 text-white" />
+                  </div>
+                  <h5 className="text-base font-bold text-slate-900 mb-1">Drag files or click to upload</h5>
+                  <p className="text-sm text-slate-500 mb-4">Share your files easily. Up to 10 files can be uploaded</p>
+                  
+                  <div className="flex justify-center gap-2">
+                     {['PDF', 'DOCX', 'TXT'].map(type => (
+                       <span key={type} className="px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-bold text-gray-500 shadow-sm">
+                         {type}
+                       </span>
+                     ))}
+                  </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Or Import from Website</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="url" 
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
-                    placeholder="https://yourpractice.com"
-                  />
-                  <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium">
-                    Import
-                  </button>
-                </div>
+              {/* List Header */}
+              <div className="flex items-center justify-between pt-4">
+                 <p className="text-sm font-medium text-gray-500">Upload documents or add URLs</p>
+                 <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-md hover:shadow-lg">
+                    <Plus className="w-4 h-4" />
+                    Add Source
+                 </button>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium text-gray-700">Uploaded Documents</p>
-                  <span className="text-xs text-gray-500">3 files</span>
-                </div>
-                <div className="space-y-2">
-                  {[
-                    { name: 'Service Menu.pdf', size: '2.3 MB', type: 'PDF' },
-                    { name: 'Treatment Guide.docx', size: '1.8 MB', type: 'DOCX' },
-                    { name: 'Practice Policies.pdf', size: '1.2 MB', type: 'PDF' }
-                  ].map((file, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                          <p className="text-xs text-gray-500">{file.type} • {file.size}</p>
-                        </div>
-                      </div>
-                      <button className="text-red-600 hover:text-red-700">
-                        <X className="w-4 h-4" />
-                      </button>
+              {/* File List */}
+              <div className="space-y-3">
+                 {/* Item 1 - Indexed */}
+                 <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
+                          <FileText className="w-5 h-5 text-blue-600" />
+                       </div>
+                       <div>
+                          <p className="text-sm font-bold text-gray-900">Service Menu.pdf</p>
+                          <p className="text-xs text-gray-400 font-medium">PDF • 2.3 MB</p>
+                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-center gap-4">
+                       <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Indexed</span>
+                       <button className="text-gray-400 hover:text-red-500 transition-colors">
+                          <X className="w-5 h-5" />
+                       </button>
+                    </div>
+                 </div>
+
+                 {/* Item 2 - Processing */}
+                 <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
+                          <FileText className="w-5 h-5 text-blue-600" />
+                       </div>
+                       <div>
+                          <p className="text-sm font-bold text-gray-900">Treatment Guidelines.docx</p>
+                          <p className="text-xs text-gray-400 font-medium">Document • 1.8 MB</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                       <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">Processing</span>
+                       <button className="text-gray-400 hover:text-red-500 transition-colors">
+                          <X className="w-5 h-5" />
+                       </button>
+                    </div>
+                 </div>
               </div>
             </div>
           </div>
@@ -284,108 +409,191 @@ const GiaImprovedUX = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">FAQ Management</h3>
-              <p className="text-sm text-gray-600">Add frequently asked questions about appointments, pricing, and policies</p>
+              <h3 className="text-base font-bold text-gray-900 mb-1">GIA's Answers</h3>
+              <p className="text-sm text-gray-500">Teach GIA how to answer common questions about your practice.</p>
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-blue-900 mb-1">FAQ Tips</p>
-                    <p className="text-sm text-blue-800">
-                      Focus on appointment booking, pricing, insurance, policies, and common patient concerns
-                    </p>
+            {/* List or Form */}
+            {isAddingFaq ? (
+               <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 animate-fade-in-up">
+                  <h4 className="text-sm font-bold text-gray-900 mb-4">{editingFaqId ? 'Edit Q&A' : 'Add New Q&A'}</h4>
+                  
+                  <div className="space-y-4">
+                     <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Question</label>
+                        <input 
+                           type="text"
+                           value={faqForm.question}
+                           onChange={(e) => setFaqForm({...faqForm, question: e.target.value})}
+                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                           placeholder="e.g. Do you have parking?" 
+                        />
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Answer</label>
+                        <textarea 
+                           rows={4}
+                           value={faqForm.answer}
+                           onChange={(e) => setFaqForm({...faqForm, answer: e.target.value})}
+                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                           placeholder="e.g. Yes, we have a free parking lot behind the building." 
+                        />
+                     </div>
+                     
+                     <div className="flex items-center gap-3 pt-2">
+                        <button 
+                           onClick={handleSaveFaq}
+                           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors"
+                        >
+                           Save Q&A
+                        </button>
+                        <button 
+                           onClick={() => { setIsAddingFaq(false); setEditingFaqId(null); setFaqForm({question:'', answer:''}); }}
+                           className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors"
+                        >
+                           Cancel
+                        </button>
+                     </div>
                   </div>
-                </div>
-              </div>
+               </div>
+            ) : (
+               <div className="space-y-4">
+                  <button 
+                    onClick={() => { setIsAddingFaq(true); setFaqForm({question:'', answer:''}); }}
+                    className="w-full py-3 border-2 border-dashed border-blue-200 bg-blue-50 text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-100 hover:border-blue-300 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add New Q&A
+                  </button>
 
-              <button className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all text-gray-600 hover:text-blue-600 flex items-center justify-center gap-2 font-medium">
-                <Plus className="w-5 h-5" />
-                Add New FAQ
-              </button>
-
-              <div className="pt-4 border-t border-gray-200">
-                <p className="text-sm font-medium text-gray-700 mb-3">Existing FAQs</p>
-                <div className="space-y-3">
-                  {[
-                    { 
-                      q: 'How do I book an appointment?', 
-                      a: 'You can book an appointment by calling us at (555) 123-4567 or using our online booking system.',
-                      category: 'Appointments'
-                    },
-                    { 
-                      q: 'What insurance plans do you accept?', 
-                      a: 'We accept most major insurance plans including Blue Cross, Aetna, and United Healthcare.',
-                      category: 'Insurance'
-                    },
-                    { 
-                      q: 'What is your cancellation policy?', 
-                      a: 'We require 24 hours notice for cancellations to avoid a cancellation fee.',
-                      category: 'Policies'
-                    }
-                  ].map((faq, idx) => (
-                    <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                              {faq.category}
-                            </span>
-                          </div>
-                          <h4 className="font-medium text-gray-900 mb-2">{faq.q}</h4>
-                          <p className="text-sm text-gray-600">{faq.a}</p>
+                  <div className="space-y-3">
+                     {localFaqs.map((faq) => (
+                        <div key={faq.id} className="group bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all">
+                           <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                 <div className="flex items-start gap-3 mb-2">
+                                    <div className="mt-1 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                       <span className="text-[10px] font-bold text-blue-700">Q</span>
+                                    </div>
+                                    <h4 className="font-bold text-gray-900 text-sm leading-snug">{faq.question}</h4>
+                                 </div>
+                                 <div className="flex items-start gap-3">
+                                    <div className="mt-1 w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                       <span className="text-[10px] font-bold text-gray-600">A</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed">{faq.answer}</p>
+                                 </div>
+                              </div>
+                              <div className="flex flex-col gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <button 
+                                    onClick={() => startEditFaq(faq)}
+                                    className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-lg transition-colors"
+                                    title="Edit"
+                                 >
+                                    <Edit2 className="w-4 h-4" />
+                                 </button>
+                                 <button 
+                                    onClick={() => handleDeleteFaq(faq.id)}
+                                    className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                                    title="Delete"
+                                 >
+                                    <X className="w-4 h-4" />
+                                 </button>
+                              </div>
+                           </div>
                         </div>
-                        <div className="flex gap-1">
-                          <button className="p-1.5 hover:bg-gray-100 rounded">
-                            <Edit2 className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <button className="p-1.5 hover:bg-red-50 rounded">
-                            <X className="w-4 h-4 text-red-600" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                     ))}
+                  </div>
+               </div>
+            )}
           </div>
         );
 
-      case 'connections':
+      case 'booking':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Integrations</h3>
-              <p className="text-sm text-gray-600">Connect booking systems and calendar</p>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Booking</h3>
+              <p className="text-sm text-gray-500">
+                Gia can present customers with your booking link when contextually relevant, or if you don't have a booking link, she can take down a booking request and notify human staff to follow-up.
+              </p>
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-green-900">Google Calendar</p>
-                      <p className="text-sm text-green-700">Connected</p>
-                    </div>
-                  </div>
-                  <button className="text-sm text-red-600 hover:text-red-700 font-medium">Disconnect</button>
-                </div>
-              </div>
+            {/* Toggle Switch */}
+            <div className="bg-gray-100 p-1 rounded-full inline-flex relative">
+              <button 
+                onClick={() => setBookingMode('direct')}
+                className={`px-6 py-2 rounded-full text-sm font-bold transition-all relative z-10 ${
+                  bookingMode === 'direct' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Direct Scheduling
+              </button>
+              <button 
+                onClick={() => setBookingMode('request')}
+                className={`px-6 py-2 rounded-full text-sm font-bold transition-all relative z-10 ${
+                  bookingMode === 'request' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Booking Request
+              </button>
+            </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div>
-                  <p className="font-medium text-gray-900">Enable Booking</p>
-                  <p className="text-sm text-gray-600">Allow appointment scheduling</p>
+            <div className="space-y-6">
+              {bookingMode === 'direct' ? (
+                // Direct Scheduling Content
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                   <h4 className="text-sm font-bold text-gray-900 mb-2">GIA will provide a booking URL for direct scheduling</h4>
+                   <p className="text-sm text-gray-500 mb-6">
+                     When contextually relevant, Gia will present your booking link so patients can book an appointment
+                   </p>
+
+                   <div>
+                      <label className="block text-sm font-bold text-gray-900 mb-2">Booking URL</label>
+                      <input 
+                        type="url"
+                        defaultValue="https://widget-ui.growthemr.com/assets/widgets/new-form.html?bid=1964&fid=17614" 
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg text-gray-600 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                      />
+                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
+              ) : (
+                // Booking Request Content
+                <div className="space-y-6">
+                   <div className="bg-white border border-gray-200 rounded-xl p-6">
+                      <div className="flex items-start gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
+                         <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
+                            <Clock className="w-5 h-5 text-gray-500" />
+                         </div>
+                         <div>
+                            <h4 className="text-sm font-bold text-gray-900 mb-1">Business Hours</h4>
+                            <p className="text-xs text-gray-500">GIA will use location business hours for scheduling</p>
+                         </div>
+                      </div>
+
+                      <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
+                         <div className="bg-blue-600 rounded text-white p-0.5 mt-0.5">
+                           <AlertCircle className="w-3 h-3" />
+                         </div>
+                         <p className="text-xs text-yellow-800 leading-relaxed font-medium">
+                            GIA will automatically use the business hours configured for each location. To view or modify business hours, go to <span className="font-bold text-yellow-900">Settings → Locations → Business Hours</span>
+                         </p>
+                      </div>
+                   </div>
+
+                   <div>
+                      <label className="block text-sm font-bold text-gray-900 mb-2">Assign booking requests to</label>
+                      <div className="relative">
+                         <select className="w-full px-4 py-3 border border-gray-200 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white transition-all cursor-pointer">
+                            <option>Sakshi D</option>
+                            <option>Dr. Smith</option>
+                            <option>Front Desk</option>
+                         </select>
+                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                      </div>
+                   </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -396,10 +604,11 @@ const GiaImprovedUX = () => {
   };
 
   // DASHBOARD
+  // DASHBOARD
   const Dashboard = () => (
-    <div className="space-y-10">
+    <div className="space-y-8">
         {/* Hero Section */}
-        <div className="text-center py-10 px-4">
+        <div className="text-center py-8 px-4">
            {/* Status Badge */}
            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold mb-6 animate-fade-in-up">
               <CheckCircle className="w-4 h-4" />
@@ -409,23 +618,85 @@ const GiaImprovedUX = () => {
            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Zap className="w-8 h-8 text-blue-600" />
            </div>
-           <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">Meet GIA, Your AI Assistant</h1>
-           <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-8 leading-relaxed">
+           <h1 className="text-3xl font-extrabold text-gray-900 mb-4 tracking-tight">Meet GIA, Your AI Assistant</h1>
+           <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8 leading-relaxed">
              Gia automates patient communication, answers questions instantly, and converts leads into bookings—24/7, without skipping a beat.
            </p>
            <button 
              onClick={() => setActiveTopTab('configuration')}
-             className="px-8 py-3.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-200 flex items-center gap-2 mx-auto"
+             className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-bold shadow-lg shadow-blue-200 flex items-center gap-2 mx-auto"
            >
              {isEditMode ? 'Manage Configuration' : 'Get Started'}
              <ChevronRight className="w-4 h-4" />
            </button>
         </div>
 
+        {/* Improvement Suggestions - Only in Edit Mode */}
+        {isEditMode && (
+           <div className="animate-fade-in-up">
+              <div className="flex items-center gap-4 mb-6">
+                 <h2 className="text-lg font-bold text-gray-900">Ways to Improve GIA</h2>
+                 <div className="h-px bg-gray-200 flex-1"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 {/* Upload Documents */}
+                 <div 
+                    onClick={() => openConfigDrawer('training')}
+                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group"
+                 >
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-600 transition-colors">
+                       <Upload className="w-5 h-5 text-blue-600 group-hover:text-white" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-1">Expand Knowledge Base</h3>
+                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+                       Upload more relevant documents such as clinic policies, service menus, and pricing guides.
+                    </p>
+                    <span className="text-xs font-bold text-blue-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                       Upload Files <ArrowRight className="w-3 h-3" />
+                    </span>
+                 </div>
+
+                 {/* Refine Answers */}
+                 <div 
+                    onClick={() => openConfigDrawer('faqs')}
+                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group"
+                 >
+                    <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mb-3 group-hover:bg-indigo-600 transition-colors">
+                       <MessageSquare className="w-5 h-5 text-indigo-600 group-hover:text-white" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-1">Refine Answers</h3>
+                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+                       Review recent answers and provide feedback or add new Q&As to improve accuracy.
+                    </p>
+                    <span className="text-xs font-bold text-indigo-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                       Manage Q&A <ArrowRight className="w-3 h-3" />
+                    </span>
+                 </div>
+
+                 {/* Check Analytics */}
+                 <div 
+                    onClick={() => setActiveTopTab('analytics')}
+                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group"
+                 >
+                    <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mb-3 group-hover:bg-purple-600 transition-colors">
+                       <BarChart3 className="w-5 h-5 text-purple-600 group-hover:text-white" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-1">Check Performance</h3>
+                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+                       See how GIA is performing with patients and identify areas for improvement.
+                    </p>
+                    <span className="text-xs font-bold text-purple-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                       View Analytics <ArrowRight className="w-3 h-3" />
+                    </span>
+                 </div>
+              </div>
+           </div>
+        )}
+
         {/* Features Capabilities */}
         <div>
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-xl font-bold text-gray-900">Core Capabilities</h2>
+          <div className="flex items-center gap-4 mb-6">
+            <h2 className="text-lg font-bold text-gray-900">Core Capabilities</h2>
             <div className="h-px bg-gray-200 flex-1"></div>
           </div>
 
@@ -434,7 +705,7 @@ const GiaImprovedUX = () => {
                <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
                   <Clock className="w-5 h-5 text-indigo-600" />
                </div>
-               <h3 className="text-lg font-bold text-gray-900 mb-2">Always Available</h3>
+               <h3 className="text-base font-bold text-gray-900 mb-2">Always Available</h3>
                <p className="text-sm text-gray-500 leading-relaxed">
                  Gia responds instantly to every text, email, and Instagram message—day or night, weekends and holidays included.
                </p>
@@ -444,7 +715,7 @@ const GiaImprovedUX = () => {
                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
                   <Lightbulb className="w-5 h-5 text-emerald-600" />
                </div>
-               <h3 className="text-lg font-bold text-gray-900 mb-2">Smart from Day One</h3>
+               <h3 className="text-base font-bold text-gray-900 mb-2">Smart from Day One</h3>
                <p className="text-sm text-gray-500 leading-relaxed">
                  She already knows your practice inside and out, trained on your website content and conversation history to provide accurate responses.
                </p>
@@ -454,17 +725,17 @@ const GiaImprovedUX = () => {
                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
                   <MessageSquare className="w-5 h-5 text-blue-600" />
                </div>
-               <h3 className="text-lg font-bold text-gray-900 mb-2">Seamless Collaboration</h3>
+               <h3 className="text-base font-bold text-gray-900 mb-2">Seamless Collaboration</h3>
                <p className="text-sm text-gray-500 leading-relaxed">
                  When a conversation needs a human touch, Gia smoothly hands off to your staff right within your Growth99 Inbox.
                </p>
             </div>
 
-             <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors">
                   <TrendingUp className="w-5 h-5 text-purple-600" />
                </div>
-               <h3 className="text-lg font-bold text-gray-900 mb-2">Converts to Action</h3>
+               <h3 className="text-base font-bold text-gray-900 mb-2">Converts to Action</h3>
                <p className="text-sm text-gray-500 leading-relaxed">
                  Gia naturally gathers contact details during conversations and shares relevant booking information with prospects at just the right moment.
                </p>
@@ -585,7 +856,7 @@ const GiaImprovedUX = () => {
               {/* Drawer header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-100">
                 <div>
-                   <h2 className="text-2xl font-bold text-gray-900">
+                   <h2 className="text-xl font-bold text-gray-900">
                     {configurationCards.find(c => c.id === activeConfigSection)?.title}
                   </h2>
                   <p className="text-sm text-gray-500 mt-1">
@@ -718,8 +989,8 @@ const GiaImprovedUX = () => {
               { id: 'coverage', label: 'Knowledge Coverage', icon: Database },
               { id: 'sources', label: 'Knowledge Sources', icon: Upload },
               { id: 'graph', label: 'Knowledge Graph', icon: TrendingUp },
-              { id: 'faq', label: 'FAQs List', icon: MessageSquare },
-              { id: 'feedback', label: 'Feedback', icon: Lightbulb }
+              { id: 'faq', label: 'Q&A Content', icon: BookOpen },
+              { id: 'feedback', label: 'Learning & Correction', icon: Lightbulb }
 
             ].map(tab => (
               <button 
