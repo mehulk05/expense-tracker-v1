@@ -21,6 +21,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import GiaImprovedUX from './pages/Gia';
+import TemplatePage from './pages/Template';
 
 const App: React.FC = () => {
   return (
@@ -30,6 +31,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/gia" element={<GiaImprovedUX />} />
+          <Route path="/templates" element={<TemplatePage />} />
           <Route 
             path="/" 
             element={
@@ -155,6 +157,7 @@ const App: React.FC = () => {
                </ProtectedRoute>
              } 
           />
+         
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

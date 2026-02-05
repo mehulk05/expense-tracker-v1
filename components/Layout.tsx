@@ -61,6 +61,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Friends', path: '/splitwise/people', icon: ICONS.Account }
       ]
     },
+    { name: 'Templates', path: '/templates', icon: ICONS.FileStack },
   ];
 
   const renderNavItem = (item: NavItem, depth = 0) => {
