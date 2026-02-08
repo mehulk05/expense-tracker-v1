@@ -30,6 +30,8 @@ const ExpenseManager: React.FC = () => {
   
   // Search and Pagination state
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   
   // Multi-select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -235,6 +237,11 @@ const ExpenseManager: React.FC = () => {
       }
   };
 
+  // Reset to page 1 when filters or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filter]);
+
   const filteredExpenses = expenses.filter(exp => {
     // 1. Filter by Personal/Other
     if (filter !== 'all') {
@@ -260,6 +267,22 @@ const ExpenseManager: React.FC = () => {
     
     return true;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedExpenses = filteredExpenses.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page
+  };
 
 
   if (loading) return (
@@ -292,70 +315,70 @@ const ExpenseManager: React.FC = () => {
       {/* SECTION 1: OVERVIEW METRICS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <AppCard className="p-5">
-              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Spent This Year</p>
-              <p className="text-2xl font-black text-gray-900">{formatCurrency(metrics.yearTotal)}</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Spent This Year</p>
+              <p className="text-2xl font-bold text-slate-800">{formatCurrency(metrics.yearTotal)}</p>
           </AppCard>
           <AppCard className="p-5">
-              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Spent This Month</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Spent This Month</p>
               <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-black text-gray-900">{formatCurrency(metrics.monthTotal)}</p>
-                  <span className="text-[10px] font-bold text-gray-400">
+                  <p className="text-2xl font-bold text-slate-800">{formatCurrency(metrics.monthTotal)}</p>
+                  <span className="text-[10px] font-bold text-slate-400">
                       {((metrics.monthTotal / (metrics.yearTotal || 1)) * 100).toFixed(0)}% of year
                   </span>
               </div>
           </AppCard>
           <AppCard className="p-5">
-              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Personal Spend (Year)</p>
-              <p className="text-2xl font-black text-blue-600">{formatCurrency(metrics.personalTotal)}</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Personal Spend (Year)</p>
+              <p className="text-2xl font-bold text-blue-600">{formatCurrency(metrics.personalTotal)}</p>
           </AppCard>
           <AppCard className="p-5">
-              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">External Spend (Year)</p>
-              <p className="text-2xl font-black text-gray-900">{formatCurrency(metrics.externalTotal)}</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">External Spend (Year)</p>
+              <p className="text-2xl font-bold text-slate-800">{formatCurrency(metrics.externalTotal)}</p>
           </AppCard>
       </div>
       
       {/* SECTION 2: PAYMENT BREAKDOWN */}
       <div>
-         <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider mb-4 px-2">Payment Breakdown</h3>
+         <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4 px-2">Payment Breakdown</h3>
          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <AppCard className="p-5 !rounded-lg border border-gray-100 bg-white" hoverEffect={false}>
+            <AppCard className="p-5 border-slate-100 bg-white" hoverEffect={false}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-orange-600 text-[10px] font-black uppercase tracking-widest mb-1">UPI</p>
-                    <p className="text-xl font-black text-gray-900">{formatCurrency(metrics.upiTotal)}</p>
+                    <p className="text-orange-600 text-[10px] font-bold uppercase tracking-widest mb-1">UPI</p>
+                    <p className="text-xl font-bold text-slate-800">{formatCurrency(metrics.upiTotal)}</p>
                   </div>
                   <div className="p-2 bg-orange-50 rounded-md">
                     <ICONS.Smartphone className="w-4 h-4 text-orange-600" />
                   </div>
                 </div>
             </AppCard>
-            <AppCard className="p-5 !rounded-lg border border-gray-100 bg-white" hoverEffect={false}>
+            <AppCard className="p-5 border-slate-100 bg-white" hoverEffect={false}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-blue-600 text-[10px] font-black uppercase tracking-widest mb-1">Credit Card</p>
-                    <p className="text-xl font-black text-gray-900">{formatCurrency(metrics.creditTotal)}</p>
+                    <p className="text-blue-600 text-[10px] font-bold uppercase tracking-widest mb-1">Credit Card</p>
+                    <p className="text-xl font-bold text-slate-800">{formatCurrency(metrics.creditTotal)}</p>
                   </div>
                   <div className="p-2 bg-blue-50 rounded-md">
                     <ICONS.Cards className="w-4 h-4 text-blue-600" />
                   </div>
                 </div>
             </AppCard>
-            <AppCard className="p-5 !rounded-lg border border-gray-100 bg-white" hoverEffect={false}>
+            <AppCard className="p-5 border-slate-100 bg-white" hoverEffect={false}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-violet-600 text-[10px] font-black uppercase tracking-widest mb-1">Debit Card</p>
-                    <p className="text-xl font-black text-gray-900">{formatCurrency(metrics.debitTotal)}</p>
+                    <p className="text-violet-600 text-[10px] font-bold uppercase tracking-widest mb-1">Debit Card</p>
+                    <p className="text-xl font-bold text-slate-800">{formatCurrency(metrics.debitTotal)}</p>
                   </div>
                   <div className="p-2 bg-violet-50 rounded-md">
                     <ICONS.Cards className="w-4 h-4 text-violet-600" />
                   </div>
                 </div>
             </AppCard>
-            <AppCard className="p-5 !rounded-lg border border-gray-100 bg-white" hoverEffect={false}>
+            <AppCard className="p-5 border-slate-100 bg-white" hoverEffect={false}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-1">Cash</p>
-                    <p className="text-xl font-black text-gray-900">{formatCurrency(metrics.cashTotal)}</p>
+                    <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest mb-1">Cash</p>
+                    <p className="text-xl font-bold text-slate-800">{formatCurrency(metrics.cashTotal)}</p>
                   </div>
                   <div className="p-2 bg-emerald-50 rounded-md">
                     <ICONS.Wallet className="w-4 h-4 text-emerald-600" />
@@ -370,13 +393,13 @@ const ExpenseManager: React.FC = () => {
           {/* Search Bar */}
           <div className="flex-1 w-full lg:w-auto">
              <div className="relative">
-                <ICONS.Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <ICONS.Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                     type="text" 
                     placeholder="Search transactions..." 
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-semibold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300"
                 />
              </div>
           </div>
@@ -384,17 +407,17 @@ const ExpenseManager: React.FC = () => {
           {/* Filter & Actions */}
           <div className="flex flex-wrap gap-3 w-full lg:w-auto">
              {/* Filter Dropdown */}
-             <div className="relative">
+              <div className="relative">
                  <select 
                     value={filter} 
                     onChange={e => setFilter(e.target.value as any)}
-                    className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all"
+                    className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition-all"
                 >
                     <option value="all">All Records</option>
                     <option value="personal">Personal</option>
                     <option value="other">Institutional</option>
                  </select>
-                 <svg className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <svg className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                  </svg>
              </div>
@@ -413,7 +436,7 @@ const ExpenseManager: React.FC = () => {
                 <>
                     <button 
                         onClick={() => navigate('/expenses/import')}
-                        className="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 rounded-lg text-sm font-bold flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap"
+                        className="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-lg text-sm font-bold flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -562,26 +585,26 @@ const ExpenseManager: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/80">
+              <tr className="border-b border-slate-200 bg-slate-50/50">
                 <th className="w-10 pl-6 py-4">
                     <input 
                         type="checkbox" 
                         checked={selectedIds.size > 0 && selectedIds.size === filteredExpenses.length}
                         onChange={toggleAll}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-4 focus:ring-blue-500/10 accent-blue-600 cursor-pointer"
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-4 focus:ring-blue-500/10 accent-blue-600 cursor-pointer"
                     />
                 </th>
-                <th className="py-4 text-sm font-bold text-gray-900 text-left w-40">Date</th>
-                <th className="py-4 text-sm font-bold text-gray-900 text-left w-32">Channel</th>
-                <th className="py-4 text-sm font-bold text-gray-900 text-left w-32">Type</th>
-                <th className="py-4 text-sm font-bold text-gray-900 text-left">Source/Card</th>
-                <th className="py-4 text-sm font-bold text-gray-900 text-left">Classification</th>
-                <th className="py-4 text-sm font-bold text-gray-900 text-right">Value</th>
+                <th className="py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left w-40">Date</th>
+                <th className="py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left w-32">Channel</th>
+                <th className="py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left w-32">Type</th>
+                <th className="py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left">Source/Card</th>
+                <th className="py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left">Classification</th>
+                <th className="py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Value</th>
                 <th className="w-10 py-4"></th>
               </tr>
             </thead>
             <tbody className="bg-white">
-              {filteredExpenses.length === 0 ? (
+              {paginatedExpenses.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-24 text-center">
                     <div className="text-gray-300 mb-4 flex justify-center">
@@ -591,17 +614,17 @@ const ExpenseManager: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredExpenses.map((exp) => {
+                paginatedExpenses.map((exp) => {
                   const expIsPersonal = exp.personalExpense ?? true;
                   const paymentParams = getPaymentParams(accounts.find(a => a.id === exp.accountId)?.type || exp.paymentMethod);
                   return (
-                    <tr key={exp.id} className={`hover:bg-gray-50/50 transition-all group ${selectedIds.has(exp.id) ? 'bg-blue-50/20' : 'border-b border-gray-100 last:border-0'}`}>
+                    <tr key={exp.id} className={`hover:bg-slate-50/50 transition-all group ${selectedIds.has(exp.id) ? 'bg-blue-50/20' : 'border-b border-slate-100 last:border-0'}`}>
                       <td className="pl-6 py-4">
                         <input 
                             type="checkbox" 
                             checked={selectedIds.has(exp.id)}
                             onChange={() => toggleSelection(exp.id)}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-4 focus:ring-blue-500/10 accent-blue-600 cursor-pointer"
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-4 focus:ring-blue-500/10 accent-blue-600 cursor-pointer"
                         />
                       </td>
                       <td className="font-semibold text-gray-900 text-xs tracking-wider py-4">
@@ -630,17 +653,17 @@ const ExpenseManager: React.FC = () => {
                            }
                         </span>
                       </td>
-                      <td className="py-4">
+                       <td className="py-4">
                         <div className="flex flex-col">
-                           <p className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">
+                           <p className="font-medium text-slate-700 text-sm group-hover:text-blue-600 transition-colors">
                             {categories.find(c => c.id === exp.categoryId)?.name || 'Misc'}
-                          </p>
-                          <p className="text-xs text-gray-400 truncate max-w-[300px] mt-1">
+                           </p>
+                           <p className="text-xs text-slate-400 truncate max-w-[300px] mt-1 font-medium">
                             {exp.description || 'Verified entry'}
-                          </p>
+                           </p>
                         </div>
                       </td>
-                      <td className="text-right font-semibold text-gray-900 text-sm py-4">
+                      <td className="text-right font-bold text-slate-800 text-sm py-4">
                         {formatCurrency(exp.amount, 2)}
                       </td>
                       <td className="text-right pl-4 py-4 pr-6">
@@ -666,6 +689,117 @@ const ExpenseManager: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {filteredExpenses.length > 0 && (
+          <div className="border-t border-slate-200 px-6 py-4 flex items-center justify-between">
+            {/* Left: Page Info */}
+            <div className="flex items-center gap-4">
+              <p className="text-sm text-slate-600 font-medium">
+                Showing <span className="font-bold text-slate-900">{startIndex + 1}</span> to{' '}
+                <span className="font-bold text-slate-900">{Math.min(endIndex, filteredExpenses.length)}</span> of{' '}
+                <span className="font-bold text-slate-900">{filteredExpenses.length}</span> transactions
+              </p>
+              
+              {/* Items per page selector */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-slate-600 font-medium">Show:</label>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="text-sm font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Right: Page Navigation */}
+            <div className="flex items-center gap-2">
+              {/* First Page */}
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                aria-label="First page"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Previous Page */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                aria-label="Previous page"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  // Show pages around current page
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-3.5 py-2 text-sm font-bold rounded-lg transition-all ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next Page */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                aria-label="Next page"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Last Page */}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                aria-label="Last page"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </AppCard>
 
 

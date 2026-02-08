@@ -20,9 +20,9 @@ export const AppButton: React.FC<AppButtonProps> = ({
     
     const variants = {
         primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-100",
-        secondary: "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400",
+        secondary: "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400",
         danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100",
-        ghost: "bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+        ghost: "bg-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100"
     };
 
     const sizes = {

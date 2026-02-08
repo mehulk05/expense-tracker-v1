@@ -11,7 +11,7 @@ export const AppCard: React.FC<AppCardProps> = ({ children, className = '', onCl
     return (
         <div 
             onClick={onClick}
-            className={`bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden ${hoverEffect ? 'hover:border-blue-200 hover:shadow-md hover:shadow-blue-100/50 hover:-translate-y-0.5 transition-all duration-300' : ''} ${className}`}
+            className={`bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden ${hoverEffect ? 'hover:border-blue-200 hover:shadow-md hover:shadow-blue-100/50 hover:-translate-y-0.5 transition-all duration-300' : ''} ${className}`}
         >
             {children}
         </div>

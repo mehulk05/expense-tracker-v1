@@ -282,12 +282,20 @@ export const parseCsvForPreview = async (
                                 categoryId = categoryWithSub.id;
                             } else {
                                 const categoryByName = currentCategories.find(c => c.name.toLowerCase() === typeStr.toLowerCase());
-                                categoryId = categoryByName ? categoryByName.id : (
-                                    currentCategories.find(c => c.type === (isPersonal ? 'personal' : 'other'))?.id || currentCategories[0]?.id || ''
-                                );
+                                if (categoryByName) {
+                                    categoryId = categoryByName.id;
+                                } else {
+                                    // Strict validation: Don't fall back to default category
+                                    validationError = validationError
+                                        ? `${validationError}; Category "${typeStr}" not found`
+                                        : `Category "${typeStr}" not found`;
+                                    hasErrors = true;
+                                    categoryId = 'invalid-category';
+                                }
                             }
                         } else {
-                            categoryId = currentCategories.find(c => c.type === (isPersonal ? 'personal' : 'other'))?.id || currentCategories[0]?.id || '';
+                            // If no category specified, use first available
+                            categoryId = currentCategories[0]?.id || '';
                         }
 
                         // Create ImportedExpense Object

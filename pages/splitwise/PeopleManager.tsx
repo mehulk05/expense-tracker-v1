@@ -136,8 +136,8 @@ const PeopleManager: React.FC = () => {
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Friends Directory</h1>
-          <p className="text-slate-500 font-bold mt-1 text-xs uppercase tracking-wider">Manage people for group splits</p>
+          <h1 className="text-lg font-bold text-slate-800 tracking-tight uppercase">Friends Directory</h1>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">Manage people for group splits</p>
         </div>
         <div className="flex gap-4 w-full md:w-auto">
              <div className="relative flex-1 md:w-64">
@@ -147,12 +147,12 @@ const PeopleManager: React.FC = () => {
                     placeholder="Search friends..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 transition-colors shadow-sm"
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-colors hover:border-slate-300 shadow-sm"
                 />
              </div>
-             <button onClick={() => setShowAdd(true)} className="btn-primary shadow-indigo-200 shrink-0">
-                <ICONS.Plus className="w-4 h-4 mr-2" />
-                <span className="text-[10px] uppercase tracking-widest">Add Friend</span>
+             <button onClick={() => setShowAdd(true)} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
+                <ICONS.Plus className="w-4 h-4" />
+                <span>Add Friend</span>
              </button>
         </div>
       </div>
@@ -168,23 +168,23 @@ const PeopleManager: React.FC = () => {
                  const memberGroups = groups.filter(g => g.memberIds.includes(p.id));
 
                  return (
-                  <div key={p.id} className={`bg-white p-6 rounded-2xl border ${isMe ? 'border-indigo-200 bg-indigo-50/10' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative`}>
-                     {isMe && <div className="absolute top-3 right-3 text-[9px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">It's You</div>}
+                  <div key={p.id} className={`bg-white p-6 rounded-2xl border ${isMe ? 'border-blue-200 bg-blue-50/10' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative`}>
+                     {isMe && <div className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">It's You</div>}
                      
                      <div className="flex items-center gap-4 mb-4">
                          <img src={p.avatar} alt={p.name} className="w-12 h-12 rounded-full border border-slate-100 bg-white" />
                          <div>
-                             <h3 className="font-bold text-slate-900 line-clamp-1 break-all" title={p.name}>{p.name}</h3>
+                             <h3 className="font-bold text-slate-800 line-clamp-1 break-all" title={p.name}>{p.name}</h3>
                              <p className="text-[10px] font-bold text-slate-400 line-clamp-1 break-all" title={p.email}>{p.email || 'No email'}</p>
                          </div>
                      </div>
 
-                     <div className="border-t border-slate-50 pt-3 mt-auto">
+                      <div className="border-t border-slate-50 pt-3 mt-auto">
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Member of {memberGroups.length} groups</p>
                         <div className="flex flex-wrap gap-1.5 min-h-[1.5rem]">
                             {memberGroups.length > 0 ? (
                                 memberGroups.slice(0, 3).map(g => (
-                                    <span key={g.id} className="text-[9px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 max-w-[100px] truncate">
+                                    <span key={g.id} className="text-[9px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 max-w-[100px] truncate">
                                         {g.name}
                                     </span>
                                 ))
@@ -200,10 +200,10 @@ const PeopleManager: React.FC = () => {
                      </div>
 
                      <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur rounded p-1 shadow-sm border border-slate-100">
-                         <button onClick={() => handleEdit(p)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded">
+                         <button onClick={() => handleEdit(p)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded">
                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                          </button>
-                         <button onClick={() => handleDelete(p.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded">
+                         <button onClick={() => handleDelete(p.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded">
                              <ICONS.Trash className="w-3.5 h-3.5" />
                          </button>
                      </div>

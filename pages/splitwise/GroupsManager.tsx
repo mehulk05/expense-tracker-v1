@@ -176,13 +176,13 @@ const GroupsManager: React.FC = () => {
        {/* Header */}
        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Manage Groups</h1>
-          <p className="text-slate-500 font-bold mt-1 text-xs uppercase tracking-wider">Your shared expense groups</p>
+          <h1 className="text-lg font-bold text-slate-800 tracking-tight uppercase">Manage Groups</h1>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">Your shared expense groups</p>
         </div>
         <div>
-             <button onClick={() => setShowAdd(true)} className="btn-primary shadow-indigo-200">
-                <ICONS.Plus className="w-4 h-4 mr-2" />
-                <span className="text-[10px] uppercase tracking-widest">New Group</span>
+             <button onClick={() => setShowAdd(true)} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
+                <ICONS.Plus className="w-4 h-4" />
+                <span>New Group</span>
              </button>
         </div>
       </div>
@@ -200,13 +200,13 @@ const GroupsManager: React.FC = () => {
         ) : (
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="bg-slate-50 border-b border-slate-200">
+                    <thead className="bg-slate-50/50 border-b border-slate-200">
                         <tr>
-                            <th className="py-4 pl-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Group Name</th>
-                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Members</th>
-                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Created</th>
-                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Total Spent</th>
-                            <th className="py-4 pr-6 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
+                            <th className="py-4 pl-6 text-xs font-semibold uppercase tracking-wider text-slate-500">Group Name</th>
+                            <th className="py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Members</th>
+                            <th className="py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Created</th>
+                            <th className="py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">Total Spent</th>
+                            <th className="py-4 pr-6 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -218,10 +218,10 @@ const GroupsManager: React.FC = () => {
                             >
                                 <td className="py-4 pl-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center font-bold border border-slate-100 group-hover:bg-blue-600 group-hover:text-white transition-all">
                                             {g.name[0]}
                                         </div>
-                                        <span className="font-bold text-slate-900">{g.name}</span>
+                                        <span className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{g.name}</span>
                                     </div>
                                 </td>
                                 <td className="py-4">
@@ -247,7 +247,7 @@ const GroupsManager: React.FC = () => {
                                     </span>
                                 </td>
                                 <td className="py-4 text-right">
-                                    <span className="text-sm font-black text-slate-900">
+                                    <span className="text-sm font-bold text-slate-800">
                                         {formatCurrency(groupTotals[g.id] || 0)}
                                     </span>
                                 </td>
@@ -255,17 +255,17 @@ const GroupsManager: React.FC = () => {
                                     <div className="flex items-center justify-end gap-2">
                                         <button 
                                             onClick={(e) => openEdit(g, e)}
-                                            className="p-2 text-slate-400 hover:text-indigo-600 bg-white border border-slate-200 hover:border-indigo-200 rounded-lg shadow-sm"
+                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                             title="Rename Group"
                                         >
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                         </button>
                                         <button 
                                             onClick={(e) => handleDeleteGroup(g.id, e)}
-                                            className="p-2 text-slate-400 hover:text-rose-600 bg-white border border-slate-200 hover:border-rose-200 rounded-lg shadow-sm"
+                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                             title="Delete Group"
                                         >
-                                            <ICONS.Trash className="w-3.5 h-3.5" />
+                                            <ICONS.Trash className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </td>

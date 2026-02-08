@@ -11,7 +11,10 @@ const AccountManager: React.FC = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [filter, setFilter] = useState<AccountType | 'all'>('all');
   const [search, setSearch] = useState('');
+
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<'month' | 'year'>('month'); // Added timeRange
+
   
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
@@ -93,6 +96,33 @@ const AccountManager: React.FC = () => {
     }
   };
 
+  const getAccountMetrics = (acc: Account) => {
+    const now = new Date();
+    const currentExpenses = expenses.filter(e => {
+        const d = new Date(e.date);
+        if (timeRange === 'month') {
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        } else {
+            return d.getFullYear() === now.getFullYear();
+        }
+    }).filter(e => {
+        if (e.accountId === acc.id) return true;
+        
+        // Fallback: Flexible Name match
+        if (!e.accountId && e.paymentMethod === acc.type) {
+             const source = (e as any).source || ''; 
+             return source.toLowerCase() === acc.name.toLowerCase() || 
+                    source.toLowerCase() === (acc.nickname || '').toLowerCase();
+        }
+        return false;
+    });
+
+    const totalSpent = currentExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const count = currentExpenses.length;
+    
+    return { totalSpent, count };
+  };
+
   const getUsageInsight = (acc: Account) => {
     const now = new Date();
     const currentMonthExpenses = expenses.filter(e => {
@@ -132,46 +162,107 @@ const AccountManager: React.FC = () => {
       return matchesFilter && matchesSearch;
   });
 
+  // Group accounts by Entity Name
+  const groupedAccounts = React.useMemo(() => {
+    return filteredAccounts.reduce((groups, acc) => {
+        const name = acc.name;
+        if (!groups[name]) groups[name] = [];
+        groups[name].push(acc);
+        return groups;
+    }, {} as Record<string, Account[]>);
+  }, [filteredAccounts]);
+
   if (loading) return (
     <div className="space-y-4">
       {[1,2,3].map(i => <div key={i} className="h-16 skeleton rounded-2xl w-full"></div>)}
     </div>
   );
 
+  // Calculate Top 4 Accounts
+  const accountStats = accounts.map(acc => ({
+      ...acc,
+      ...getAccountMetrics(acc)
+  })).sort((a, b) => b.totalSpent - a.totalSpent);
+  const topAccounts = accountStats.slice(0, 4);
+
   return (
-    <div className="space-y-12 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Verified Channels</h2>
-            <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">Active Liquidity Points</p>
+                <h1 className="text-lg font-bold text-slate-800 tracking-tight">Verified Channels</h1>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">Active Liquidity Points</p>
             </div>
-            <div className="flex gap-4 w-full sm:w-auto">
-                <button onClick={() => setShowAdd(true)} className="btn-primary !px-10 shadow-indigo-200">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <button 
+                        onClick={() => setTimeRange('month')} 
+                        className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${timeRange === 'month' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                        This Month
+                    </button>
+                    <button 
+                        onClick={() => setTimeRange('year')} 
+                        className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${timeRange === 'year' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                        This Year
+                    </button>
+                </div>
+                <button onClick={() => setShowAdd(true)} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
                 <ICONS.Plus className="w-4 h-4" />
-                <span className="text-[10px] uppercase tracking-widest">Add Source</span>
+                <span>Add Source</span>
                 </button>
             </div>
+        </div>
+
+        {/* Top 4 Metrics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {topAccounts.map(acc => (
+                <div key={acc.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all group cursor-pointer">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className={`p-2.5 rounded-xl ${getBadgeStyles(acc.type).replace('border', 'bg-opacity-20')}`}>
+                            <ICONS.Account className="w-5 h-5" />
+                        </div>
+                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest ${getBadgeStyles(acc.type)}`}>
+                            {acc.type}
+                        </span>
+                    </div>
+                    <div className="space-y-1">
+                        <h3 className="font-bold text-slate-800 text-sm truncate">{acc.name}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{acc.nickname || '-'}</p>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-end justify-between">
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total Spent</p>
+                            <span className="text-lg font-black text-slate-900 tracking-tight">₹{acc.totalSpent.toLocaleString()}</span>
+                        </div>
+                         <div className="text-right">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Txns</p>
+                            <span className="text-sm font-bold text-slate-600">{acc.count}</span>
+                        </div>
+                    </div>
+                </div>
+            ))}
         </div>
 
         {/* Search and Filter Bar */}
         <div className="flex flex-col sm:flex-row gap-4 p-1">
              <div className="relative flex-1">
+                <ICONS.Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                     type="text" 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search accounts..." 
-                    className="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 shadow-sm transition-all"
+                    className="w-full bg-white border border-slate-200 rounded-lg pl-12 pr-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 hover:border-slate-300 transition-all"
                 />
-                <svg className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
              </div>
              
              <div className="relative min-w-[200px]">
               <select 
                value={filter} 
                onChange={(e) => setFilter(e.target.value as any)}
-               className="w-full bg-white border border-slate-200 rounded-xl px-6 py-3.5 font-black text-[10px] uppercase tracking-widest outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 appearance-none pr-12 shadow-sm text-slate-600"
+               className="w-full bg-white border border-slate-200 rounded-lg px-6 py-2.5 font-bold text-[10px] uppercase tracking-widest outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 appearance-none pr-12 text-slate-600 hover:border-slate-300 transition-all"
              >
                <option value="all">All Channels</option>
                <option value="upi">UPI</option>
@@ -180,7 +271,7 @@ const AccountManager: React.FC = () => {
                <option value="cash">Cash</option>
              </select>
              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
              </div>
            </div>
         </div>
@@ -230,22 +321,24 @@ const AccountManager: React.FC = () => {
       </SidePopover>
 
       {/* Data Table */}
-       <div className="card-professional shadow-xl shadow-slate-200/50">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse">
+          <table className="min-w-full border-collapse text-left">
             <thead>
-              <tr className="text-slate-700 bg-slate-50/50 border-b border-slate-200">
-                <th className="py-4 pl-6 text-left text-[10px] font-black uppercase tracking-widest border-r border-slate-100 last:border-r-0">Nickname</th>
-                <th className="py-4 px-4 text-left text-[10px] font-black uppercase tracking-widest border-r border-slate-100 last:border-r-0">Entity Name</th>
-                <th className="py-4 px-4 text-left text-[10px] font-black uppercase tracking-widest border-r border-slate-100 last:border-r-0">Type</th>
-                <th className="py-4 px-4 text-left text-[10px] font-black uppercase tracking-widest border-r border-slate-100 last:border-r-0">Details</th>
+              <tr className="bg-slate-50/50 border-b border-slate-200">
+                <th className="py-4 pl-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nickname</th>
+                <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Entity Name</th>
+                <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Spend ({timeRange})</th>
+                <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Activity</th>
+                <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Details</th>
                 <th className="py-4 pr-6 w-10"></th>
               </tr>
             </thead>
             <tbody className="bg-white">
               {filteredAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-24 text-center">
+                  <td colSpan={7} className="py-24 text-center">
                     <div className="text-slate-300 mb-4 flex justify-center">
                        <ICONS.Account className="w-12 h-12 opacity-20" />
                     </div>
@@ -253,51 +346,68 @@ const AccountManager: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredAccounts.map((acc) => {
-                  const badgeStyle = getBadgeStyles(acc.type);
-                  const usagePercentage = getUsageInsight(acc);
-                  
-                  return (
-                    <tr key={acc.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-b-0">
-                      <td className="py-5 pl-6 font-bold text-slate-600 text-xs border-r border-slate-100 last:border-r-0">
-                         {acc.nickname || '-'}
-                      </td>
-                      <td className="py-5 px-4 font-black text-slate-900 text-base border-r border-slate-100 last:border-r-0">
-                        {acc.name}
-                        {usagePercentage !== null && (
-                            <div className="text-[9px] font-black uppercase tracking-wide text-indigo-500 mt-1 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                                Used {usagePercentage}% this month
-                            </div>
-                        )}
-                      </td>
-                      <td className="py-5 px-4 border-r border-slate-100 last:border-r-0">
-                        <span className={`text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border ${badgeStyle}`}>
-                          {acc.type}
-                        </span>
-                      </td>
-                       <td className="py-5 px-4 font-mono text-xs text-slate-600 font-bold tracking-wider border-r border-slate-100 last:border-r-0">
-                         {acc.lastFour ? `•••• ${acc.lastFour}` : '—'}
-                      </td>
-                      <td className="py-5 pr-6 text-right">
-                        <div className="flex justify-end gap-2 transition-opacity">
-                            <button 
-                                onClick={() => handleEdit(acc)}
-                                className="p-2 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            </button>
-                            <button 
-                                onClick={() => handleDelete(acc.id)}
-                                className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
-                            >
-                                <ICONS.Trash className="w-4 h-4" />
-                            </button>
+                (Object.entries(groupedAccounts) as [string, Account[]][]).map(([entityName, accounts]) => (
+                  <React.Fragment key={entityName}>
+                    {/* Group Header */}
+                    <tr className="bg-slate-50 border-b border-slate-200">
+                      <td colSpan={7} className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                            <span className="font-black text-slate-800 text-sm tracking-tight">{entityName}</span>
+                            <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-full uppercase tracking-wide shadow-sm flex items-center gap-1">
+                                {accounts.length} {accounts.length === 1 ? 'account' : 'accounts'}
+                            </span>
                         </div>
                       </td>
                     </tr>
-                  );
-                })
+                    
+                    {/* Account Rows */}
+                    {accounts.map((acc) => {
+                      const badgeStyle = getBadgeStyles(acc.type);
+                      const metrics = getAccountMetrics(acc);
+                      
+                      return (
+                        <tr key={acc.id} className="hover:bg-slate-50/50 transition-all group border-b border-slate-50 last:border-b-0">
+                          <td className="py-5 pl-6 font-medium text-slate-600 text-sm">
+                             {acc.nickname || '-'}
+                          </td>
+                          <td className="py-5 px-4 font-bold text-slate-800 text-sm">
+                            {acc.name}
+                          </td>
+                          <td className="py-5 px-4 border-r border-slate-100 last:border-r-0">
+                            <span className={`text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border ${badgeStyle}`}>
+                              {acc.type}
+                            </span>
+                          </td>
+                          <td className="py-5 px-4 font-bold text-slate-900 text-sm text-right border-r border-slate-100 last:border-r-0">
+                            {metrics.totalSpent > 0 ? `₹${metrics.totalSpent.toLocaleString()}` : <span className="text-slate-300">-</span>}
+                          </td>
+                          <td className="py-5 px-4 font-medium text-slate-600 text-xs text-right border-r border-slate-100 last:border-r-0">
+                            {metrics.count > 0 ? `${metrics.count} txns` : <span className="text-slate-300">-</span>}
+                          </td>
+                           <td className="py-5 px-4 font-mono text-xs text-slate-600 font-bold tracking-wider border-r border-slate-100 last:border-r-0">
+                             {acc.lastFour ? `•••• ${acc.lastFour}` : '—'}
+                          </td>
+                          <td className="py-5 pr-6 text-right">
+                            <div className="flex justify-end gap-2 transition-opacity">
+                                <button 
+                                    onClick={() => handleEdit(acc)}
+                                    className="p-2 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                </button>
+                                <button 
+                                    onClick={() => handleDelete(acc.id)}
+                                    className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
+                                >
+                                    <ICONS.Trash className="w-4 h-4" />
+                                </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                ))
               )}
             </tbody>
           </table>

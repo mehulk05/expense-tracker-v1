@@ -138,28 +138,28 @@ const CreditCardManager: React.FC = () => {
       {/* Header & Filter */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Credit Card Ledger</h1>
-          <p className="text-slate-500 font-bold mt-1 text-xs uppercase tracking-wider">Track Bills & Payments</p>
+          <h1 className="text-lg font-bold text-slate-800 tracking-tight uppercase">Credit Card Ledger</h1>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">Track Bills & Payments</p>
         </div>
         <div className="flex items-center gap-4">
             <input 
                 type="month" 
                 value={selectedMonth} 
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="input-professional !py-2 !w-auto"
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all hover:border-slate-300 w-auto"
             />
-            <button onClick={() => setShowAdd(true)} className="btn-primary shadow-indigo-200">
-                <ICONS.Plus className="w-4 h-4 mr-2" />
-                <span className="text-[10px] uppercase tracking-widest">Record Bill</span>
+            <button onClick={() => setShowAdd(true)} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
+                <ICONS.Plus className="w-4 h-4" />
+                <span>Record Bill</span>
             </button>
         </div>
       </div>
 
       {/* Month Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="card-professional p-6 bg-emerald-50 border-emerald-100">
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Total Paid ({selectedMonth})</p>
-              <p className="text-3xl font-black text-emerald-900">{formatCurrency(totalPaid)}</p>
+          <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/60 mb-1">Total Paid ({selectedMonth})</p>
+              <p className="text-3xl font-bold text-emerald-900">{formatCurrency(totalPaid)}</p>
           </div>
           <div className="card-professional p-6 bg-white border-slate-200">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Status Breakdown</p>
@@ -186,10 +186,10 @@ const CreditCardManager: React.FC = () => {
             <table className="w-full border-collapse">
                 <thead>
                     <tr className="bg-slate-50/50 border-b border-slate-200">
-                        <th className="py-4 pl-6 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">Card</th>
-                        <th className="py-4 px-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">Month</th>
-                        <th className="py-4 px-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">Paid</th>
-                        <th className="py-4 px-4 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">Status</th>
+                        <th className="py-4 pl-6 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Card</th>
+                        <th className="py-4 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Month</th>
+                        <th className="py-4 px-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Paid</th>
+                        <th className="py-4 px-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
                         <th className="py-4 pr-6 w-20"></th>
                     </tr>
                 </thead>
@@ -201,13 +201,13 @@ const CreditCardManager: React.FC = () => {
                             const acc = accounts.find(a => a.id === bill.cardId);
                             return (
                                 <tr key={bill.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                    <td className="py-4 pl-6 font-bold text-slate-700 text-sm border-r border-slate-50">{acc?.name || 'Unknown Card'}</td>
-                                    <td className="py-4 px-4 font-mono text-xs text-slate-500 border-r border-slate-50">{bill.month}</td>
-                                    <td className="py-4 px-4 text-right font-bold text-emerald-600 border-r border-slate-50">{formatCurrency(bill.paidAmount)}</td>
-                                    <td className="py-4 px-4 text-center border-r border-slate-50">
-                                        <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                            bill.status === 'paid' ? 'bg-emerald-100 text-emerald-700' :
-                                            bill.status === 'partial' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
+                                    <td className="py-4 pl-6 font-bold text-slate-800 text-sm">{acc?.name || 'Unknown Card'}</td>
+                                    <td className="py-4 px-4 font-medium text-xs text-slate-500">{bill.month}</td>
+                                    <td className="py-4 px-4 text-right font-bold text-emerald-600">{formatCurrency(bill.paidAmount)}</td>
+                                    <td className="py-4 px-4 text-center">
+                                        <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
+                                            bill.status === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                            bill.status === 'partial' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-red-50 text-red-600 border-red-100'
                                         }`}>
                                             {bill.status}
                                         </span>
@@ -241,7 +241,7 @@ const CreditCardManager: React.FC = () => {
                    <div key={acc.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
                        <div className="flex justify-between items-start mb-4">
                            <div>
-                               <h3 className="font-black text-slate-900">{acc.name}</h3>
+                               <h3 className="font-bold text-slate-800">{acc.name}</h3>
                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Lifetime Stats</p>
                            </div>
                            <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
@@ -251,20 +251,20 @@ const CreditCardManager: React.FC = () => {
                        <div className="space-y-3">
                            <div className="flex justify-between text-xs">
                                <span className="text-slate-500 font-bold">Avg Payment</span>
-                               <span className="font-black text-slate-900">{formatCurrency(stats.avgPayment)}</span>
+                               <span className="font-bold text-slate-800">{formatCurrency(stats.avgPayment)}</span>
                            </div>
                            <div className="flex justify-between text-xs">
                                <span className="text-slate-500 font-bold">Highest Payment</span>
-                               <span className="font-black text-slate-900">{formatCurrency(stats.highest)}</span>
+                               <span className="font-bold text-slate-800">{formatCurrency(stats.highest)}</span>
                            </div>
                             <div className="flex justify-between text-xs">
                                <span className="text-slate-500 font-bold">Total Paid</span>
-                               <span className="font-black text-emerald-600">{formatCurrency(stats.totalPaid)}</span>
+                               <span className="font-bold text-emerald-600">{formatCurrency(stats.totalPaid)}</span>
                            </div>
                            <div className="pt-3 border-t border-slate-50 flex items-center gap-2">
-                               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Consistency:</span>
+                               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Consistency:</span>
                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                   <div className="h-full bg-emerald-500" style={{ width: `${(stats.onTime / (stats.onTime + stats.missed)) * 100}%` }}></div>
+                                   <div className="h-full bg-emerald-500" style={{ width: `${(stats.onTime / (stats.onTime + (stats.missed || 1))) * 100}%` }}></div>
                                </div>
                            </div>
                        </div>

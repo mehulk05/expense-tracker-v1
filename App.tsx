@@ -23,6 +23,8 @@ import { ToastProvider } from './context/ToastContext';
 import GiaImprovedUX from './pages/Gia';
 import TemplatePage from './pages/Template';
 
+import LandingPage from './pages/LandingPage';
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -30,10 +32,11 @@ const App: React.FC = () => {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/" element={<LandingPage />} /> 
           <Route path="/gia" element={<GiaImprovedUX />} />
           <Route path="/templates" element={<TemplatePage />} />
           <Route 
-            path="/" 
+            path="/dashboard" 
             element={
               <ProtectedRoute>
                 <Layout><Dashboard /></Layout>

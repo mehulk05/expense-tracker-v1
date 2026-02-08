@@ -78,19 +78,19 @@ const BudgetManager: React.FC = () => {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Budget Planner</h1>
-          <p className="text-slate-500 font-bold mt-1 text-xs uppercase tracking-wider">Master your spending limits</p>
+          <h1 className="text-lg font-bold text-slate-800 tracking-tight">Budget Planner</h1>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">Master your spending limits</p>
         </div>
         <div className="relative w-full md:w-80">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
             <input 
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search categories..."
-                className="pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 w-full focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all outline-none placeholder:text-slate-300"
+                className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 w-full focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300"
             />
         </div>
       </div>
@@ -99,11 +99,11 @@ const BudgetManager: React.FC = () => {
         <div className="overflow-x-auto">
             <table className="w-full">
                 <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="py-4 pl-6 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 w-1/4">Category</th>
-                        <th className="py-4 px-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 w-1/3">Usage & Status</th>
-                        <th className="py-4 px-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Spent / Budget</th>
-                        <th className="py-4 pr-6 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 w-1/4">Limit & Frequency</th>
+                    <tr className="bg-slate-50/50 border-b border-slate-200">
+                        <th className="py-4 pl-6 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-1/4">Category</th>
+                        <th className="py-4 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-1/3">Usage & Status</th>
+                        <th className="py-4 px-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Spent / Budget</th>
+                        <th className="py-4 pr-6 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 w-1/4">Limit & Frequency</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -119,11 +119,11 @@ const BudgetManager: React.FC = () => {
                             <tr key={cat.id} className="group hover:bg-slate-50/60 transition-colors">
                                 <td className="py-5 pl-6">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black shrink-0 ${isOver ? 'bg-rose-100 text-rose-500' : 'bg-indigo-50 text-indigo-600'}`}>
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${isOver ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-slate-50 text-slate-600 border border-slate-100'}`}>
                                             {cat.name[0]}
                                         </div>
                                         <div>
-                                            <p className="font-extrabold text-slate-900 text-sm">{cat.name}</p>
+                                            <p className="font-bold text-slate-800 text-sm">{cat.name}</p>
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{cat.type || 'General'}</p>
                                         </div>
                                     </div>
@@ -191,7 +191,7 @@ const BudgetManager: React.FC = () => {
                                     </div>
                                 </td>
                                 <td className="py-5 px-4 text-right">
-                                    <p className={`font-black text-sm ${isOver ? 'text-rose-600' : 'text-slate-900'}`}>{formatCurrency(spent)}</p>
+                                    <p className={`font-bold text-sm ${isOver ? 'text-red-600' : 'text-slate-800'}`}>{formatCurrency(spent)}</p>
                                     <p className="text-[10px] font-bold text-slate-400 mt-0.5">
                                         of {budget > 0 ? formatCurrency(budget) : 'Unset'}
                                     </p>

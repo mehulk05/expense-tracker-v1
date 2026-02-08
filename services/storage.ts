@@ -311,5 +311,19 @@ export const storage = {
     if (!user) return;
     try { await deleteDoc(doc(db, `users/${user.uid}/planned_expenses`, id)); }
     catch (error) { handleFirestoreError(error, null); }
+  },
+
+  // --- Credit Card Bills Module ---
+  getCreditCardBills: async (): Promise<import('../types').CreditCardBill[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/credit_card_bills`),
+        orderBy('dueDate', 'asc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as import('../types').CreditCardBill));
+    } catch (error) { return handleFirestoreError(error, []); }
   }
 };

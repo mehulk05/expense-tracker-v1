@@ -27,7 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   const navItems: NavItem[] = [
-    { name: 'Dashboard', path: '/', icon: ICONS.Dashboard },
+    { name: 'Dashboard', path: '/dashboard', icon: ICONS.Dashboard },
     { 
       name: 'Tasks', 
       path: '/todo', 
@@ -47,10 +47,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Future Expense', path: '/planned', icon: ICONS.Calendar }
       ]
     },
-    { name: 'Accounts', path: '/accounts', icon: ICONS.Account },
+    { name: 'Card and Accounts', path: '/accounts', icon: ICONS.Account },
     { name: 'Categories', path: '/categories', icon: ICONS.Category },
     { name: 'Budget', path: '/budget', icon: ICONS.Dashboard },
-    { name: 'Cards', path: '/credit-cards', icon: ICONS.Cards },
+    { name: 'Credit Card Bills', path: '/credit-cards', icon: ICONS.Cards },
     { 
       name: 'Splitwise', 
       path: '/splitwise', 

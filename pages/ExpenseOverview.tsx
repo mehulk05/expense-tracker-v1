@@ -365,21 +365,21 @@ const ExpenseOverview: React.FC = () => {
             {/* Header with Time Control */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                   <h1 className="text-xl font-bold text-gray-900 tracking-tight">Overview</h1>
-                   <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mt-1">{analytics.rangeLabel}</p>
+                   <h1 className="text-lg font-bold text-slate-800 tracking-tight">Overview</h1>
+                   <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">{analytics.rangeLabel}</p>
                 </div>
                 
-                <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex overflow-x-auto text-[10px] font-bold no-scrollbar">
+                <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 flex overflow-x-auto text-[10px] font-bold no-scrollbar">
                     {(['this-month', 'last-month', 'this-year', 'all-time'] as const).map(range => (
                         <button 
                             key={range}
                             onClick={() => setTimeRange(range)} 
-                            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${timeRange === range ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${timeRange === range ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                         >
                             {range.replace('-', ' ').toUpperCase()}
                         </button>
                     ))}
-                    <Link to="/expenses" className="px-4 py-2 ml-2 border-l border-gray-100 text-blue-600 hover:text-blue-700">
+                    <Link to="/expenses" className="px-4 py-2 ml-2 border-l border-slate-100 text-blue-600 hover:text-blue-700">
                         LEDGER
                     </Link>
                 </div>
@@ -388,30 +388,30 @@ const ExpenseOverview: React.FC = () => {
             {/* BUDGET DASHBOARD (Top Cards) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* 1. Total Spent */}
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-2">Total Spent</p>
-                     <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(analytics.totalSpent)}</p>
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Total Spent</p>
+                     <p className="text-2xl font-bold text-slate-800 mb-1">{formatCurrency(analytics.totalSpent)}</p>
                      {timeRange !== 'all-time' && (
                         <div className="flex items-center gap-1.5 mt-2">
                              <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${analytics.changePercent > 0 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
                                  {analytics.changePercent > 0 ? '↑' : '↓'} {Math.abs(analytics.changePercent).toFixed(0)}%
                              </div>
-                             <span className="text-[10px] text-gray-400 font-semibold">vs prev</span>
+                             <span className="text-[10px] text-slate-400 font-bold">vs prev</span>
                         </div>
                      )}
                 </div>
 
                 {/* 2. Budget Health */}
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Budget Health</p>
+                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Budget Health</p>
                         <ICONS.Chart className={`w-4 h-4 ${analytics.budgetHealth > 100 ? 'text-red-500' : analytics.budgetHealth > 90 ? 'text-orange-500' : 'text-emerald-500'}`} />
                      </div>
                      {analytics.totalBudget > 0 ? (
                         <>
-                            <p className="text-2xl font-bold text-gray-900 mb-1">{analytics.budgetHealth.toFixed(0)}<span className="text-sm text-gray-400">%</span></p>
-                            <p className="text-[10px] font-bold text-gray-400 mb-2">of {formatCurrency(analytics.totalBudget)} limit</p>
-                            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                            <p className="text-2xl font-bold text-slate-800 mb-1">{analytics.budgetHealth.toFixed(0)}<span className="text-sm text-slate-400">%</span></p>
+                            <p className="text-[10px] font-bold text-slate-400 mb-2">of {formatCurrency(analytics.totalBudget)} limit</p>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                                 <div 
                                     className={`h-full rounded-full transition-all duration-500 ${
                                         analytics.budgetHealth > 100 ? 'bg-red-500' : 
@@ -429,15 +429,15 @@ const ExpenseOverview: React.FC = () => {
                 </div>
 
                 {/* 3. Remaining */}
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-2">Remaining</p>
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Remaining</p>
                      {analytics.totalBudget > 0 ? (
                         <>
                             <p className={`text-2xl font-bold mb-1 ${analytics.remainingBudget < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                                 {formatCurrency(analytics.remainingBudget)}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
-                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${analytics.daysLeft < 5 ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${analytics.daysLeft < 5 ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
                                     {analytics.daysLeft} days left
                                 </span>
                                 {analytics.projectedTotal > analytics.totalBudget && analytics.remainingBudget > 0 && (
@@ -456,26 +456,26 @@ const ExpenseOverview: React.FC = () => {
                 </div>
 
                  {/* 4. Top Spending */}
-                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-2">Top Spend</p>
+                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Top Spend</p>
                      {analytics.topVendors.length > 0 ? (
                         <div>
-                            <p className="text-lg font-bold text-gray-900 truncate" title={analytics.topVendors[0].name}>{analytics.topVendors[0].name}</p>
-                            <p className="text-xs font-bold text-blue-600">{formatCurrency(analytics.topVendors[0].value)}</p>
-                            <p className="text-[10px] text-gray-400 mt-1 font-bold">{((analytics.topVendors[0].value / analytics.totalSpent) * 100).toFixed(0)}% of total</p>
+                            <p className="text-sm font-bold text-slate-800 truncate" title={analytics.topVendors[0].name}>{analytics.topVendors[0].name}</p>
+                            <p className="text-lg font-bold text-blue-600">{formatCurrency(analytics.topVendors[0].value)}</p>
+                            <p className="text-[10px] text-slate-400 mt-1 font-bold">{((analytics.topVendors[0].value / analytics.totalSpent) * 100).toFixed(0)}% of total</p>
                         </div>
                      ) : (
-                        <p className="text-gray-300 font-bold text-sm">No Data</p>
+                        <p className="text-slate-300 font-bold text-sm">No Data</p>
                      )}
                 </div>
             </div>
             
             {/* SPENDING TREND CHART */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="mb-6 flex justify-between items-end">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900">Spending Trends</h2>
-                        <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Actual vs Budget</p>
+                        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Spending Trends</h2>
+                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Actual vs Budget</p>
                     </div>
                 </div>
                 <div className="h-64 w-full text-xs">
@@ -520,10 +520,10 @@ const ExpenseOverview: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* CATEGORY BUDGET BREAKDOWN */}
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-gray-900">Budget vs Actual</h2>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{analytics.categoryStats.length} Categories</span>
+                        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Budget vs Actual</h2>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{analytics.categoryStats.length} Categories</span>
                     </div>
                     
                     <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
@@ -602,8 +602,8 @@ const ExpenseOverview: React.FC = () => {
                 <div className="space-y-8">
                      {/* Alerts Panel */}
                      {analytics.insights.length > 0 && (
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4 flex items-center gap-2">
                                 Insights & Alerts
                                 <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{analytics.insights.length}</span>
                             </h2>
@@ -632,8 +632,8 @@ const ExpenseOverview: React.FC = () => {
                      )}
 
                      {/* Payment Analysis */}
-                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <h2 className="text-lg font-bold text-gray-900 mb-6">Payment Analysis</h2>
+                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-6">Payment Analysis</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {analytics.paymentData.map((method, idx) => (
                                 <div key={method.name} className="p-4 rounded-xl bg-gray-50 border border-gray-100 group hover:border-blue-100 transition-colors">
@@ -658,23 +658,23 @@ const ExpenseOverview: React.FC = () => {
                  </div>
 
                  <div className="lg:col-span-2">
-                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-gray-900">Recent Transactions</h3>
-                            <Link to="/expenses" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
-                                View All
-                            </Link>
-                        </div>
-                         <div className="overflow-x-auto">
-                            <table className="min-w-full">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                     <tr>
-                                        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Date</th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Category</th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Description</th>
-                                        <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Amount</th>
-                                     </tr>
-                                </thead>
+                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                             <h3 className="text-sm font-bold text-slate-800">Recent Transactions</h3>
+                             <Link to="/expenses" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
+                                 View All
+                             </Link>
+                         </div>
+                          <div className="overflow-x-auto">
+                             <table className="min-w-full text-left border-collapse">
+                                 <thead>
+                                      <tr className="border-b border-slate-100">
+                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white">Date</th>
+                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white">Category</th>
+                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white">Description</th>
+                                         <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white">Amount</th>
+                                      </tr>
+                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {analytics.filteredExpenses.slice(0, 10).map(exp => (
                                         <tr key={exp.id} className="hover:bg-gray-50/50 transition-colors">

@@ -28,7 +28,7 @@ const Login: React.FC = () => {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
       }
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Authentication failed.');
     } finally {

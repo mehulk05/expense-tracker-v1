@@ -17,12 +17,20 @@ const TodoApp: React.FC = () => {
     // Filters & Sort
     const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     // Form State
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
-    const [dueDate, setDueDate] = useState('');
+    const [dueDate, setDueDate] = useState(() => {
+        const oneWeekFromNow = new Date();
+        oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+        return oneWeekFromNow.toISOString().split('T')[0];
+    });
     const [category, setCategory] = useState('Personal');
     const [editId, setEditId] = useState<string | null>(null);
 
@@ -109,7 +117,9 @@ const TodoApp: React.FC = () => {
         setTitle('');
         setDescription('');
         setPriority('medium');
-        setDueDate('');
+        const oneWeekFromNow = new Date();
+        oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+        setDueDate(oneWeekFromNow.toISOString().split('T')[0]);
         setCategory('Personal');
         setEditId(null);
         setShowAdd(false);
@@ -166,6 +176,11 @@ const TodoApp: React.FC = () => {
 
     const stats = getStats();
 
+    // Reset to page 1 when filters or search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filterStatus]);
+
     // --- Derived State ---
     const filteredTodos = todos
         .filter(t => {
@@ -179,6 +194,22 @@ const TodoApp: React.FC = () => {
             if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
             return 0;
         });
+
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredTodos.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedTodos = filteredTodos.slice(startIndex, endIndex);
+
+    // Pagination handlers
+    const handlePageChange = (page: number) => {
+        setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    };
+
+    const handleItemsPerPageChange = (newItemsPerPage: number) => {
+        setItemsPerPage(newItemsPerPage);
+        setCurrentPage(1);
+    };
 
     const groupTodos = () => {
         const groups = {
@@ -320,14 +351,14 @@ const TodoApp: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {filteredTodos.length === 0 ? (
+                        {paginatedTodos.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="py-12 text-center text-slate-400 text-sm">
                                     No tasks found based on current filters.
                                 </td>
                             </tr>
                         ) : (
-                            filteredTodos.map(todo => (
+                            paginatedTodos.map(todo => (
                                 <tr key={todo.id} onClick={() => openEdit(todo)} className="hover:bg-slate-50/80 transition-colors cursor-pointer group">
                                     <td className="py-4 px-6 text-center">
                                          <button 
@@ -389,6 +420,117 @@ const TodoApp: React.FC = () => {
                         )}
                     </tbody>
                 </table>
+
+                {/* Pagination Controls */}
+                {filteredTodos.length > 0 && (
+                    <div className="border-t border-slate-200 px-6 py-4 flex items-center justify-between">
+                        {/* Left: Page Info */}
+                        <div className="flex items-center gap-4">
+                            <p className="text-sm text-slate-600 font-medium">
+                                Showing <span className="font-bold text-slate-900">{startIndex + 1}</span> to{' '}
+                                <span className="font-bold text-slate-900">{Math.min(endIndex, filteredTodos.length)}</span> of{' '}
+                                <span className="font-bold text-slate-900">{filteredTodos.length}</span> tasks
+                            </p>
+                            
+                            {/* Items per page selector */}
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm text-slate-600 font-medium">Show:</label>
+                                <select
+                                    value={itemsPerPage}
+                                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                                    className="text-sm font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={20}>20</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Right: Page Navigation */}
+                        <div className="flex items-center gap-2">
+                            {/* First Page */}
+                            <button
+                                onClick={() => handlePageChange(1)}
+                                disabled={currentPage === 1}
+                                className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                aria-label="First page"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                                </svg>
+                            </button>
+
+                            {/* Previous Page */}
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                aria-label="Previous page"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+
+                            {/* Page Numbers */}
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    // Show pages around current page
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => handlePageChange(pageNum)}
+                                            className={`px-3.5 py-2 text-sm font-bold rounded-lg transition-all ${
+                                                currentPage === pageNum
+                                                    ? 'bg-blue-600 text-white shadow-sm'
+                                                    : 'text-slate-600 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Next Page */}
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                aria-label="Next page"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+
+                            {/* Last Page */}
+                            <button
+                                onClick={() => handlePageChange(totalPages)}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                aria-label="Last page"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };

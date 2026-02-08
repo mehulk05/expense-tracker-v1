@@ -77,7 +77,7 @@ export interface GroupExpense {
   paidBy: string; // Person ID
   participants: string[]; // List of Person IDs involved
   splitMethod: SplitMethod;
-  splits?: Record<string, number>; // For unequal (amount) or percentage (percent)
+  shares?: Record<string, number>; // For unequal (amount) or percentage (percent)
   notes?: string;
 }
 
