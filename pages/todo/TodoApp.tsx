@@ -7,6 +7,11 @@ import { storage } from '../../services/storage';
 import { Todo } from '../../types';
 import SidePopover from '../../components/SidePopover';
 import TodoOverview from './TodoOverview';
+import { CustomDateRangePicker } from '../../components/ui/CustomDateRangePicker';
+import { CustomDatePicker } from '../../components/ui/CustomDatePicker';
+import { AppCard } from '../../components/ui/AppCard';
+
+
 
 const TodoApp: React.FC = () => {
     const [todos, setTodos] = useState<Todo[]>([]);
@@ -17,6 +22,13 @@ const TodoApp: React.FC = () => {
     // Filters & Sort
     const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+    
+    // Time Filtering
+    const [timeFilter, setTimeFilter] = useState<'all' | 'this-month' | 'last-month' | 'custom'>('all');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
     
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -149,51 +161,63 @@ const TodoApp: React.FC = () => {
     const location = useLocation();
     const activeTab = location.pathname.includes('/list') ? 'todos' : 'overview';
 
-    // --- Stats Logic ---
-    const getStats = () => {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+    // --- Filtering Logic ---
+    const timeFilteredTodos = React.useMemo(() => {
+        return todos.filter(t => {
+            const expDate = new Date(t.createdAt);
+            const now = new Date();
 
-        const totalTasksMonth = todos.filter(t => {
-            const d = new Date(t.createdAt);
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        }).length;
-
-        const completedMonth = todos.filter(t => {
-            const d = new Date(t.createdAt);
-            return t.isCompleted && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        }).length;
-
-        const pendingTotal = todos.filter(t => !t.isCompleted).length;
-        
-        const overdueTotal = todos.filter(t => !t.isCompleted && t.dueDate && isOverdue(t.dueDate)).length;
-
-        const progress = totalTasksMonth === 0 ? 0 : Math.round((completedMonth / totalTasksMonth) * 100);
-
-        return { totalTasksMonth, completedMonth, pendingTotal, overdueTotal, progress };
-    };
-
-    const stats = getStats();
-
-    // Reset to page 1 when filters or search changes
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [searchQuery, filterStatus]);
-
-    // --- Derived State ---
-    const filteredTodos = todos
-        .filter(t => {
-            if (filterStatus === 'pending') return !t.isCompleted;
-            if (filterStatus === 'completed') return t.isCompleted;
+            if (timeFilter === 'this-month') {
+                return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
+            } else if (timeFilter === 'last-month') {
+                const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                return expDate.getMonth() === lastMonth.getMonth() && expDate.getFullYear() === lastMonth.getFullYear();
+            } else if (timeFilter === 'custom') {
+                if (startDate && t.createdAt < startDate) return false;
+                if (endDate && t.createdAt > endDate) return false;
+            }
             return true;
-        })
-        .filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
-        .sort((a, b) => {
-            if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-            if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-            return 0;
         });
+    }, [todos, timeFilter, startDate, endDate]);
+
+    const priorityMetrics = React.useMemo(() => {
+        return {
+            high: timeFilteredTodos.filter(t => t.priority === 'high').length,
+            medium: timeFilteredTodos.filter(t => t.priority === 'medium').length,
+            low: timeFilteredTodos.filter(t => t.priority === 'low').length,
+            total: timeFilteredTodos.length,
+            completed: timeFilteredTodos.filter(t => t.isCompleted).length
+        };
+    }, [timeFilteredTodos]);
+
+    const filteredTodos = React.useMemo(() => {
+        return timeFilteredTodos
+            .filter(t => {
+                if (filterStatus === 'pending') return !t.isCompleted;
+                if (filterStatus === 'completed') return t.isCompleted;
+                return true;
+            })
+            .filter(t => {
+                if (priorityFilter !== 'all') return t.priority === priorityFilter;
+                return true;
+            })
+            .filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
+            .sort((a, b) => {
+                if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+                if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+                return 0;
+            });
+    }, [timeFilteredTodos, filterStatus, priorityFilter, searchQuery]);
+
+    const stats = React.useMemo(() => {
+        const total = timeFilteredTodos.length;
+        const completed = timeFilteredTodos.filter(t => t.isCompleted).length;
+        const pendingTotal = timeFilteredTodos.filter(t => !t.isCompleted).length;
+        const overdueTotal = timeFilteredTodos.filter(t => !t.isCompleted && t.dueDate && isOverdue(t.dueDate)).length;
+        const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+        return { totalTasksMonth: total, completedMonth: completed, pendingTotal, overdueTotal, progress };
+    }, [timeFilteredTodos]);
 
     // Pagination calculations
     const totalPages = Math.ceil(filteredTodos.length / itemsPerPage);
@@ -560,7 +584,124 @@ const TodoApp: React.FC = () => {
     if (loading) return <div className="p-8"><div className="h-10 w-48 skeleton rounded mb-8"></div></div>;
 
     return (
-        <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col pt-6 px-6 md:px-8 pb-4 ${activeTab === 'todos' ? 'h-[calc(100vh-64px)]' : ''}`}>
+        <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col pt-6 px-6 md:px-8 pb-4 ${activeTab === 'todos' ? 'h-full overflow-y-auto' : ''}`}>
+            
+            {/* GLOBAL FILTERS & METRICS */}
+            <div className="space-y-6 mb-8 flex-shrink-0">
+                {/* 1. Refined Global Filter Bar - Right Aligned */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                    {/* Left: Section Title */}
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">Task Statistics</h2>
+                        <p className="text-sm text-slate-500 font-medium">Manage and filter your daily productivity</p>
+                    </div>
+
+                    {/* Right: Filters aligned to the right */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-4 ml-auto">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            {/* Time Filter Button Group */}
+                            <div className="flex bg-white border border-slate-200 rounded-xl p-1 shadow-sm h-fit">
+                                {[
+                                    { id: 'all', label: 'All Time' },
+                                    { id: 'this-month', label: 'This Month' },
+                                    { id: 'last-month', label: 'Last Month' },
+                                    { id: 'custom', label: 'Custom' }
+                                ].map((opt) => (
+                                    <div key={opt.id} className="flex items-center">
+                                        <button
+                                            onClick={() => setTimeFilter(opt.id as any)}
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 ${
+                                                timeFilter === opt.id 
+                                                    ? 'bg-indigo-600 text-white shadow-sm' 
+                                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                        
+                                        {/* Inline Date Picker next to Custom */}
+                                        {opt.id === 'custom' && timeFilter === 'custom' && (
+                                            <div className="ml-2 animate-in slide-in-from-left-2 duration-300">
+                                                <CustomDateRangePicker 
+                                                    startDate={startDate}
+                                                    endDate={endDate}
+                                                    onRangeChange={(start, end) => {
+                                                        setStartDate(start);
+                                                        setEndDate(end);
+                                                    }}
+                                                    className="w-56"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Priority Filter Button Group - Indigo themed */}
+                            <div className="flex bg-white border border-slate-200 rounded-xl p-1 shadow-sm h-fit">
+                                {[
+                                    { id: 'all', label: 'All' },
+                                    { id: 'high', label: 'High' },
+                                    { id: 'medium', label: 'Med' },
+                                    { id: 'low', label: 'Low' }
+                                ].map((opt) => (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => setPriorityFilter(opt.id as any)}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center gap-2 ${
+                                            priorityFilter === opt.id 
+                                                ? 'bg-indigo-50 text-indigo-600 shadow-sm border border-indigo-100' 
+                                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {opt.id !== 'all' && (
+                                            <div className={`w-1.5 h-1.5 rounded-full ${
+                                                opt.id === 'high' ? 'bg-rose-500' : opt.id === 'medium' ? 'bg-orange-400' : 'bg-emerald-500'
+                                            }`} />
+                                        )}
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. Minimal Metric Cards - White Backgrounds */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <AppCard className="p-5 border-slate-100 bg-white">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">High Priority</p>
+                        </div>
+                        <p className="text-2xl font-bold text-slate-800">{priorityMetrics.high} <span className="text-xs text-slate-400 font-medium">tasks</span></p>
+                    </AppCard>
+                    <AppCard className="p-5 border-slate-100 bg-white">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Medium Priority</p>
+                        </div>
+                        <p className="text-2xl font-bold text-slate-800">{priorityMetrics.medium} <span className="text-xs text-slate-400 font-medium">tasks</span></p>
+                    </AppCard>
+                    <AppCard className="p-5 border-slate-100 bg-white">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Low Priority</p>
+                        </div>
+                        <p className="text-2xl font-bold text-slate-800">{priorityMetrics.low} <span className="text-xs text-slate-400 font-medium">tasks</span></p>
+                    </AppCard>
+                    <AppCard className="p-5 border-indigo-100 bg-indigo-50/20 shadow-sm shadow-indigo-100/50">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                            <p className="text-indigo-600 text-[10px] font-bold uppercase tracking-widest">Completion</p>
+                        </div>
+                        <p className="text-2xl font-bold text-indigo-700">{stats.progress}% <span className="text-xs text-indigo-400 font-medium tracking-normal">rate</span></p>
+                    </AppCard>
+                </div>
+            </div>
+
+
+
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
                 <div className="space-y-4 md:space-y-0 text-slate-900 font-bold tracking-tight">
@@ -682,13 +823,13 @@ const TodoApp: React.FC = () => {
                         </div>
                         <div>
                              <label className="label-professional">Due date</label>
-                             <input 
-                                type="date"
+                             <CustomDatePicker 
                                 value={dueDate}
-                                onChange={e => setDueDate(e.target.value)}
-                                className="input-professional !rounded-lg"
+                                onChange={setDueDate}
+                                className="mt-2"
                              />
                         </div>
+
                     </div>
 
                     <div>

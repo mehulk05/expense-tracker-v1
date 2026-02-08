@@ -8,6 +8,10 @@ import { formatCurrency, formatInputAmount } from '../utils/currency';
 import { useToast } from '../context/ToastContext';
 import { AppCard } from '../components/ui/AppCard';
 import { AppButton } from '../components/ui/AppButton';
+import { CustomDatePicker } from '../components/ui/CustomDatePicker';
+import { CustomDateRangePicker } from '../components/ui/CustomDateRangePicker';
+
+
 
 
 const ExpenseManager: React.FC = () => {
@@ -27,6 +31,12 @@ const ExpenseManager: React.FC = () => {
   const [description, setDescription] = useState('');
   const [filter, setFilter] = useState<'all' | 'personal' | 'other'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Time Filtering state
+  const [timeFilter, setTimeFilter] = useState<'all' | 'this-month' | 'last-month' | 'custom'>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   
   // Search and Pagination state
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,14 +65,27 @@ const ExpenseManager: React.FC = () => {
 
   useEffect(() => { loadData(); }, []);
 
-  // --- METRICS CALCULATION ---
-  const metrics = React.useMemo(() => {
+  // --- FILTERING LOGIC ---
+  const timeFilteredExpenses = React.useMemo(() => {
+    return expenses.filter(exp => {
+      const expDate = new Date(exp.date);
       const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth();
+      
+      if (timeFilter === 'this-month') {
+          if (expDate.getMonth() !== now.getMonth() || expDate.getFullYear() !== now.getFullYear()) return false;
+      } else if (timeFilter === 'last-month') {
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          if (expDate.getMonth() !== lastMonth.getMonth() || expDate.getFullYear() !== lastMonth.getFullYear()) return false;
+      } else if (timeFilter === 'custom') {
+          if (startDate && exp.date < startDate) return false;
+          if (endDate && exp.date > endDate) return false;
+      }
+      return true;
+    });
+  }, [expenses, timeFilter, startDate, endDate]);
 
-      let yearTotal = 0;
-      let monthTotal = 0;
+  const metrics = React.useMemo(() => {
+      let total = 0;
       let creditTotal = 0;
       let debitTotal = 0;
       let cashTotal = 0;
@@ -70,31 +93,51 @@ const ExpenseManager: React.FC = () => {
       let personalTotal = 0;
       let externalTotal = 0;
 
-      expenses.forEach(e => {
-          const d = new Date(e.date);
-          const isYear = d.getFullYear() === currentYear;
-          const isMonth = isYear && d.getMonth() === currentMonth;
-
-          if (isYear) {
-              yearTotal += e.amount;
-              if (isMonth) monthTotal += e.amount;
-
-              if (e.personalExpense ?? true) {
-                  personalTotal += e.amount;
-              } else {
-                  externalTotal += e.amount;
-              }
-              
-              const method = accounts.find(a => a.id === e.accountId)?.type || e.paymentMethod;
-              if (method === 'credit') creditTotal += e.amount;
-              else if (method === 'debit') debitTotal += e.amount;
-              else if (method === 'cash') cashTotal += e.amount;
-              else if (method === 'upi') upiTotal += e.amount;
+      timeFilteredExpenses.forEach(e => {
+          total += e.amount;
+          if (e.personalExpense ?? true) {
+              personalTotal += e.amount;
+          } else {
+              externalTotal += e.amount;
           }
+          
+          const method = accounts.find(a => a.id === e.accountId)?.type || e.paymentMethod;
+          if (method === 'credit') creditTotal += e.amount;
+          else if (method === 'debit') debitTotal += e.amount;
+          else if (method === 'cash') cashTotal += e.amount;
+          else if (method === 'upi') upiTotal += e.amount;
       });
 
-      return { yearTotal, monthTotal, creditTotal, debitTotal, cashTotal, upiTotal, personalTotal, externalTotal };
-  }, [expenses, accounts]);
+      return { total, creditTotal, debitTotal, cashTotal, upiTotal, personalTotal, externalTotal };
+  }, [timeFilteredExpenses, accounts]);
+
+  const filteredExpenses = React.useMemo(() => {
+    return timeFilteredExpenses.filter(exp => {
+      // 1. Filter by Personal/Other
+      if (filter !== 'all') {
+          const expIsPersonal = exp.personalExpense ?? true;
+          if (filter === 'personal' && !expIsPersonal) return false;
+          if (filter === 'other' && expIsPersonal) return false;
+      }
+      
+      // 2. Filter by Search Term
+      if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          const categoryName = categories.find(c => c.id === exp.categoryId)?.name.toLowerCase() || '';
+          const accountName = accounts.find(a => a.id === exp.accountId)?.nickname?.toLowerCase() || '';
+          const descIdx = exp.description?.toLowerCase().indexOf(term) ?? -1;
+          
+          return (
+              descIdx > -1 ||
+              categoryName.includes(term) ||
+              accountName.includes(term) ||
+              exp.amount.toString().includes(term)
+          );
+      }
+      
+      return true;
+    });
+  }, [timeFilteredExpenses, filter, searchTerm, categories, accounts]);
 
 
   // Update account selection when payment method changes
@@ -240,33 +283,10 @@ const ExpenseManager: React.FC = () => {
   // Reset to page 1 when filters or search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filter]);
+  }, [searchTerm, filter, timeFilter, startDate, endDate]);
 
-  const filteredExpenses = expenses.filter(exp => {
-    // 1. Filter by Personal/Other
-    if (filter !== 'all') {
-        const expIsPersonal = exp.personalExpense ?? true;
-        if (filter === 'personal' && !expIsPersonal) return false;
-        if (filter === 'other' && expIsPersonal) return false;
-    }
-    
-    // 2. Filter by Search Term
-    if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const categoryName = categories.find(c => c.id === exp.categoryId)?.name.toLowerCase() || '';
-        const accountName = accounts.find(a => a.id === exp.accountId)?.nickname?.toLowerCase() || '';
-        const descIdx = exp.description?.toLowerCase().indexOf(term) ?? -1;
-        
-        return (
-            descIdx > -1 ||
-            categoryName.includes(term) ||
-            accountName.includes(term) ||
-            exp.amount.toString().includes(term)
-        );
-    }
-    
-    return true;
-  });
+
+
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
@@ -312,30 +332,76 @@ const ExpenseManager: React.FC = () => {
   return (
     <div className="space-y-12 animate-in fade-in duration-500">
       
+      {/* GLOBAL TIME FILTER BAR */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Financial Overview</h2>
+            <p className="text-sm text-slate-500 font-medium">Analyze your spending patterns across periods</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+             {/* Time Filter Button Group */}
+             <div className="flex bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+                {[
+                  { id: 'all', label: 'All Time' },
+                  { id: 'this-month', label: 'This Month' },
+                  { id: 'last-month', label: 'Last Month' },
+                  { id: 'custom', label: 'Custom' }
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setTimeFilter(opt.id as any)}
+                    className={`px-4 py-2 rounded-md text-xs font-bold transition-all active:scale-95 ${
+                      timeFilter === opt.id 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+             </div>
+
+             {/* Custom Date Range Picker */}
+             {timeFilter === 'custom' && (
+                <div className="animate-in slide-in-from-right-4 duration-300">
+                    <CustomDateRangePicker 
+                        startDate={startDate}
+                        endDate={endDate}
+                        onRangeChange={(start, end) => {
+                            setStartDate(start);
+                            setEndDate(end);
+                        }}
+                        className="w-64"
+                    />
+                </div>
+             )}
+
+
+          </div>
+
+      </div>
+
       {/* SECTION 1: OVERVIEW METRICS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <AppCard className="p-5">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Spent This Year</p>
-              <p className="text-2xl font-bold text-slate-800">{formatCurrency(metrics.yearTotal)}</p>
+          <AppCard className="p-5 border-blue-100 bg-blue-50/30">
+              <p className="text-blue-500 text-[10px] font-bold uppercase tracking-widest mb-1">Total Spending</p>
+              <p className="text-2xl font-black text-blue-900">{formatCurrency(metrics.total)}</p>
           </AppCard>
           <AppCard className="p-5">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Spent This Month</p>
-              <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-bold text-slate-800">{formatCurrency(metrics.monthTotal)}</p>
-                  <span className="text-[10px] font-bold text-slate-400">
-                      {((metrics.monthTotal / (metrics.yearTotal || 1)) * 100).toFixed(0)}% of year
-                  </span>
-              </div>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Transaction Count</p>
+              <p className="text-2xl font-bold text-slate-800">{timeFilteredExpenses.length} <span className="text-xs text-slate-400 font-medium">entries</span></p>
           </AppCard>
           <AppCard className="p-5">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Personal Spend (Year)</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Personal Component</p>
               <p className="text-2xl font-bold text-blue-600">{formatCurrency(metrics.personalTotal)}</p>
           </AppCard>
           <AppCard className="p-5">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">External Spend (Year)</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Institutional Component</p>
               <p className="text-2xl font-bold text-slate-800">{formatCurrency(metrics.externalTotal)}</p>
           </AppCard>
       </div>
+
       
       {/* SECTION 2: PAYMENT BREAKDOWN */}
       <div>
@@ -422,6 +488,7 @@ const ExpenseManager: React.FC = () => {
                  </svg>
              </div>
 
+
              {/* Action Buttons */}
              
              {selectedIds.size > 0 ? (
@@ -499,8 +566,9 @@ const ExpenseManager: React.FC = () => {
           <div className="space-y-6">
             <div>
               <label className="label-professional">Date</label>
-              <input type="date" required value={date} onChange={e => setDate(e.target.value)} className="input-professional" />
+              <CustomDatePicker value={date} onChange={setDate} className="mt-2" />
             </div>
+
             
             <div className="grid grid-cols-2 gap-4">
               <div>
