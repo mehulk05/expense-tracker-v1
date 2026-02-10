@@ -7,7 +7,7 @@ const GiaChatPreview = () => {
   const [channelType, setChannelType] = useState('sms');
   const [messageInput, setMessageInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [recipientEmail, setRecipientEmail] = useState('patient@example.com');
+  const [recipientEmail, setRecipientEmail] = useState('customer@example.com');
   const [recipientPhone, setRecipientPhone] = useState('+1 (555) 123-4567');
   
   const [conversation, setConversation] = useState([
