@@ -24,6 +24,7 @@ import GiaImprovedUX from './pages/Gia';
 import TemplatePage from './pages/Template';
 
 import LandingPage from './pages/LandingPage';
+import GiaChatPreview from './pages/Giapreview';
 
 const App: React.FC = () => {
   return (
@@ -34,6 +35,7 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<LandingPage />} /> 
           <Route path="/gia" element={<GiaImprovedUX />} />
+            <Route path="/gia-preview" element={<GiaChatPreview />} />
           <Route path="/templates" element={<TemplatePage />} />
           <Route 
             path="/dashboard" 

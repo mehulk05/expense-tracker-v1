@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronRight, ChevronDown, Settings, BookOpen, BarChart3, LayoutDashboard, Plus, Save, Calendar, MessageSquare, FileText, Database, TrendingUp, Lightbulb, CheckCircle, AlertCircle, Clock, Zap, ArrowRight, Check, X, Edit2, Upload, HelpCircle, ArrowDown, Globe, Monitor, LayoutGrid, Mail, Smartphone } from 'lucide-react';
+import { ChevronRight, ChevronDown, Settings, BookOpen, BarChart3, LayoutDashboard, Plus, Save, Calendar, MessageSquare, FileText, Database, TrendingUp, Lightbulb, CheckCircle, AlertCircle, Clock, Zap, ArrowRight, Check, X, Edit2, Upload, HelpCircle, ArrowDown, Globe, Monitor, LayoutGrid, Mail, Smartphone, Eye } from 'lucide-react';
+import GiaChatPreview from './Giapreview';
 
 const GiaImprovedUX = () => {
   const [hasConfiguration, setHasConfiguration] = useState(false);
@@ -55,6 +56,7 @@ const GiaImprovedUX = () => {
     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'configuration', label: 'Configuration', icon: Settings },
     { id: 'knowledge', label: 'What GIA Knows', icon: Database },
+    { id: 'preview', label: 'Test Chat', icon: MessageSquare },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 }
   ];
 
@@ -622,13 +624,22 @@ const GiaImprovedUX = () => {
               </p>
            </div>
            
-           <button 
-             onClick={() => setActiveTopTab('configuration')}
-             className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-bold shadow-sm shadow-blue-200 flex items-center gap-2 text-sm whitespace-nowrap"
-           >
-             {isEditMode ? 'Manage Configuration' : 'Setup GIA'}
-             <Settings className="w-4 h-4" />
-           </button>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setActiveTopTab('preview')}
+                className="px-5 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-bold shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+              >
+                Preview
+                <Eye className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setActiveTopTab('configuration')}
+                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-bold shadow-sm shadow-blue-200 flex items-center gap-2 text-sm whitespace-nowrap"
+              >
+                {isEditMode ? 'Manage Configuration' : 'Setup GIA'}
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
         </div>
 
         {/* Improvement Suggestions - Only in Edit Mode */}
@@ -1664,8 +1675,14 @@ const GiaImprovedUX = () => {
 
         {/* Content */}
         <div className="p-6">
-          {activeTopTab === 'overview' ? (
-            <Dashboard />
+          {activeTopTab === 'preview' ? (
+            <div className="max-w-7xl mx-auto">
+              <GiaChatPreview showShell={false} />
+            </div>
+          ) : activeTopTab === 'overview' ? (
+            <div className="max-w-6xl mx-auto">
+              <Dashboard />
+            </div>
           ) : activeTopTab === 'configuration' ? (
             <Configuration />
           ) : activeTopTab === 'knowledge' ? (
