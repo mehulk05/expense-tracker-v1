@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronRight, ChevronDown, Settings, BookOpen, BarChart3, LayoutDashboard, Plus, Save, Calendar, MessageSquare, FileText, Database, TrendingUp, Lightbulb, CheckCircle, AlertCircle, Clock, Zap, ArrowRight, Check, X, Edit2, Upload, HelpCircle, ArrowDown, Globe, Monitor, LayoutGrid, Mail, Smartphone, Eye } from 'lucide-react';
-import GiaChatPreview from './Giapreview';
-
+import GiaChatPreview from './GiaChatPreview';
+    
 const GiaImprovedUX = () => {
   const [hasConfiguration, setHasConfiguration] = useState(false);
   const [sidenavExpanded, setSidenavExpanded] = useState(true);

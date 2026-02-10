@@ -24,7 +24,7 @@ import GiaImprovedUX from './pages/Gia';
 import TemplatePage from './pages/Template';
 
 import LandingPage from './pages/LandingPage';
-import GiaChatPreview from './pages/Giapreview';
+import GiaChatPreview from './pages/GiaChatPreview';
 
 const App: React.FC = () => {
   return (
