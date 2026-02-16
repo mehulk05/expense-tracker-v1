@@ -267,6 +267,19 @@ const ExpenseManager: React.FC = () => {
       setShowAddForm(true);
   };
 
+  const handleDuplicate = (expense: Expense) => {
+      setEditingId(null); // Create new
+      setAmount(expense.amount.toString());
+      setDate(new Date().toISOString().split('T')[0]); // Set to Today
+      setAccountId(expense.accountId);
+      setCategoryId(expense.categoryId);
+      setPaymentMethod(expense.paymentMethod);
+      setIsPersonal(expense.personalExpense ?? true);
+      setDescription(expense.description); // Keep description or maybe append "(Copy)"? User said "prefixll details", implies exact copy.
+      setShowAddForm(true);
+      addToast('Duplicating expense... Review and confirm.', 'info');
+  };
+
 
 
   // Helper to get payment badge style
@@ -739,8 +752,16 @@ const ExpenseManager: React.FC = () => {
                             <button 
                                 onClick={() => handleEdit(exp)}
                                 className="p-2 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-lg transition-colors"
+                                title="Edit"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                            <button 
+                                onClick={() => handleDuplicate(exp)}
+                                className="p-2 hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 rounded-lg transition-colors"
+                                title="Duplicate"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </button>
                             <button 
                                 onClick={() => handleDelete(exp.id)}

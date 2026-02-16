@@ -25,7 +25,7 @@ const TodoApp: React.FC = () => {
     const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
     
     // Time Filtering
-    const [timeFilter, setTimeFilter] = useState<'all' | 'this-month' | 'last-month' | 'custom'>('all');
+    const [timeFilter, setTimeFilter] = useState<'all' | 'this-week' | 'this-month' | 'last-month' | 'custom'>('all');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
@@ -45,6 +45,11 @@ const TodoApp: React.FC = () => {
     });
     const [category, setCategory] = useState('Personal');
     const [editId, setEditId] = useState<string | null>(null);
+
+    // New State for Tabs and Sorting
+    const [todoTab, setTodoTab] = useState<'active' | 'completed'>('active');
+    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'dueDate', direction: 'asc' });
+    const [groupBy, setGroupBy] = useState<'none' | 'category' | 'priority' | 'dueDate'>('none');
 
     useEffect(() => {
         loadTodos();
@@ -157,7 +162,7 @@ const TodoApp: React.FC = () => {
         return dueDate < today;
     };
 
-    const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
+    const [viewMode, setViewMode] = useState<'board' | 'list'>('list');
     const location = useLocation();
     const activeTab = location.pathname.includes('/list') ? 'todos' : 'overview';
 
@@ -172,6 +177,32 @@ const TodoApp: React.FC = () => {
             } else if (timeFilter === 'last-month') {
                 const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                 return expDate.getMonth() === lastMonth.getMonth() && expDate.getFullYear() === lastMonth.getFullYear();
+            } else if (timeFilter === 'this-week') {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                // For "This Week" in terms of upcoming tasks, we usually want due dates. 
+                // But this filter seems to be based on createdAt (historical).
+                // If it's for planning "My Week", users might expect *Tasks Due This Week*.
+                // Let's assume based on context of 'expense tracker' historical data vs todo list future data.
+                // For Todo, filtering by creation date might not be as useful as due date for "This Week".
+                // HOWEVER, to keep consistent with existing logic which uses `createdAt` (line 167), I will stick to createdAt for now unless I change the whole logic.
+                // Wait, line 167 says `const expDate = new Date(t.createdAt);`.
+                // Let's change the logic to use Due Date for 'this-week' if available, otherwise createdAt?
+                // Actually, for a Todo List, "This Week" usually implies "Due This Week".
+                // But `timeFilteredTodos` was originally written for creation date filtering (likely copy-pasted or standard pattern).
+                // Let's stick to createdAt for consistency with other filters, OR allows due date if it exists?
+                // The user asked "provide the task for this week so that user can quickly access them".
+                // This implies "Tasks I need to do this week".
+                
+                if (t.dueDate) {
+                   const uDue = new Date(t.dueDate);
+                   const uNow = new Date();
+                   uNow.setHours(0,0,0,0);
+                   const uNextWeek = new Date(uNow);
+                   uNextWeek.setDate(uNextWeek.getDate() + 7);
+                   return uDue >= uNow && uDue <= uNextWeek;
+                }
+                return false; // If no due date, don't show in "This Week" view
             } else if (timeFilter === 'custom') {
                 if (startDate && t.createdAt < startDate) return false;
                 if (endDate && t.createdAt > endDate) return false;
@@ -193,8 +224,9 @@ const TodoApp: React.FC = () => {
     const filteredTodos = React.useMemo(() => {
         return timeFilteredTodos
             .filter(t => {
-                if (filterStatus === 'pending') return !t.isCompleted;
-                if (filterStatus === 'completed') return t.isCompleted;
+                // Tab Filter
+                if (todoTab === 'active') return !t.isCompleted;
+                if (todoTab === 'completed') return t.isCompleted;
                 return true;
             })
             .filter(t => {
@@ -204,10 +236,25 @@ const TodoApp: React.FC = () => {
             .filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
             .sort((a, b) => {
                 if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-                if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-                return 0;
+                
+                // Sort by due date
+                const dateA = a.dueDate ? new Date(a.dueDate).getTime() : (sortConfig.direction === 'asc' ? Number.MAX_SAFE_INTEGER : 0);
+                const dateB = b.dueDate ? new Date(b.dueDate).getTime() : (sortConfig.direction === 'asc' ? Number.MAX_SAFE_INTEGER : 0);
+                
+                if (sortConfig.direction === 'asc') {
+                    return dateA - dateB;
+                } else {
+                    return dateB - dateA;
+                }
             });
-    }, [timeFilteredTodos, filterStatus, priorityFilter, searchQuery]);
+    }, [timeFilteredTodos, todoTab, priorityFilter, searchQuery, sortConfig]);
+
+    const handleSort = (key: string) => {
+        setSortConfig(current => ({
+            key,
+            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
 
     const stats = React.useMemo(() => {
         const total = timeFilteredTodos.length;
@@ -235,7 +282,62 @@ const TodoApp: React.FC = () => {
         setCurrentPage(1);
     };
 
-    const groupTodos = () => {
+    // --- Grouping Logic ---
+    const getTodoGroup = (todo: Todo, method: 'category' | 'priority' | 'dueDate'): string => {
+        if (method === 'category') return todo.category || 'Uncategorized';
+        if (method === 'priority') return todo.priority;
+        if (method === 'dueDate') {
+            if (!todo.dueDate) return 'No Date';
+            const due = new Date(todo.dueDate);
+            due.setHours(0,0,0,0);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            const diffTime = due.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) return 'Overdue';
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Tomorrow';
+            if (diffDays > 1 && diffDays <= 7) return 'This Week';
+            if (diffDays > 7 && diffDays <= 14) return 'Next Week';
+            return 'Later';
+        }
+        return 'All';
+    };
+
+    const groupedTodos = React.useMemo(() => {
+        if (groupBy === 'none') return null;
+
+        const groups: Record<string, Todo[]> = {};
+        
+        filteredTodos.forEach(todo => {
+            const key = getTodoGroup(todo, groupBy);
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(todo);
+        });
+
+        // Sort keys based on grouping method
+        let sortedKeys: string[] = [];
+        if (groupBy === 'priority') {
+            const order = ['high', 'medium', 'low'];
+            sortedKeys = Object.keys(groups).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+        } else if (groupBy === 'dueDate') {
+            const order = ['Overdue', 'Today', 'Tomorrow', 'This Week', 'Next Week', 'Later', 'No Date'];
+            sortedKeys = Object.keys(groups).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+        } else {
+            sortedKeys = Object.keys(groups).sort();
+        }
+
+        return sortedKeys.map(key => ({
+            title: key,
+            todos: groups[key]
+        }));
+    }, [filteredTodos, groupBy]);
+
+
+    // Kanban Board Grouping (Fixed)
+    const boardGroups = React.useMemo(() => {
         const groups = {
             overdue: [] as Todo[],
             upcoming: [] as Todo[],
@@ -266,9 +368,7 @@ const TodoApp: React.FC = () => {
             }
         });
         return groups;
-    };
-
-    const taskGroups = groupTodos();
+    }, [filteredTodos]);
 
     // --- Render Components ---
     const RenderTaskGroup = ({ title, tasks, icon: Icon, colorClass, bgClass }: { title: string, tasks: Todo[], icon?: any, colorClass?: string, bgClass?: string }) => {
@@ -360,29 +460,41 @@ const TodoApp: React.FC = () => {
         );
     };
 
-    const RenderTableView = () => {
+    const RenderTableView = ({ todos }: { todos: Todo[] }) => {
         return (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-200">
                             <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider w-12"></th>
                             <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Task</th>
+                            <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Category</th>
                             <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Status</th>
                             <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider w-28">Priority</th>
-                            <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Due Date</th>
+                            <th 
+                                className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider w-32 cursor-pointer hover:text-indigo-600 transition-colors group"
+                                onClick={() => handleSort('dueDate')}
+                            >
+                                <div className="flex items-center gap-1">
+                                    Due Date
+                                    <div className="flex flex-col">
+                                        <ICONS.ChevronUp className={`w-2 h-2 ${sortConfig.key === 'dueDate' && sortConfig.direction === 'asc' ? 'text-indigo-600' : 'text-slate-300'}`} />
+                                        <ICONS.ChevronDown className={`w-2 h-2 -mt-0.5 ${sortConfig.key === 'dueDate' && sortConfig.direction === 'desc' ? 'text-indigo-600' : 'text-slate-300'}`} />
+                                    </div>
+                                </div>
+                            </th>
                             <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider w-20 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {paginatedTodos.length === 0 ? (
+                        {todos.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="py-12 text-center text-slate-400 text-sm">
+                                <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
                                     No tasks found based on current filters.
                                 </td>
                             </tr>
                         ) : (
-                            paginatedTodos.map(todo => (
+                            todos.map(todo => (
                                 <tr key={todo.id} onClick={() => openEdit(todo)} className="hover:bg-slate-50/80 transition-colors cursor-pointer group">
                                     <td className="py-4 px-6 text-center">
                                          <button 
@@ -402,6 +514,11 @@ const TodoApp: React.FC = () => {
                                             {todo.isPinned && <ICONS.Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />}
                                         </div>
                                         {todo.description && <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{todo.description}</p>}
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                            {todo.category || 'Personal'}
+                                        </span>
                                     </td>
                                     <td className="py-4 px-6">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
@@ -584,12 +701,12 @@ const TodoApp: React.FC = () => {
     if (loading) return <div className="p-8"><div className="h-10 w-48 skeleton rounded mb-8"></div></div>;
 
     return (
-        <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col pt-6 px-6 md:px-8 pb-4 ${activeTab === 'todos' ? 'h-full overflow-y-auto' : ''}`}>
+        <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col p-4 ${activeTab === 'todos' ? 'h-full overflow-y-auto' : ''}`}>
             
             {/* GLOBAL FILTERS & METRICS */}
-            <div className="space-y-6 mb-8 flex-shrink-0">
+            <div className="space-y-4 mb-6 flex-shrink-0">
                 {/* 1. Refined Global Filter Bar - Right Aligned */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                     {/* Left: Section Title */}
                     <div>
                         <h2 className="text-xl font-bold text-slate-900 tracking-tight">Task Statistics</h2>
@@ -603,6 +720,7 @@ const TodoApp: React.FC = () => {
                             <div className="flex bg-white border border-slate-200 rounded-xl p-1 shadow-sm h-fit">
                                 {[
                                     { id: 'all', label: 'All Time' },
+                                    { id: 'this-week', label: 'This Week' },
                                     { id: 'this-month', label: 'This Month' },
                                     { id: 'last-month', label: 'Last Month' },
                                     { id: 'custom', label: 'Custom' }
@@ -703,54 +821,93 @@ const TodoApp: React.FC = () => {
 
 
             
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
-                <div className="space-y-4 md:space-y-0 text-slate-900 font-bold tracking-tight">
-                    <h1 className="text-2xl font-bold">{activeTab === 'overview' ? 'Overview' : 'My Tasks'}</h1>
-                    {activeTab === 'overview' && <p className="text-slate-500 text-sm">Track your productivity metrics</p>}
-                    {activeTab === 'todos' && <p className="text-slate-500 text-sm">Manage your daily tasks</p>}
+            <div className="flex flex-col gap-4 mb-6 flex-shrink-0">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* Left: Title + Desktop Tabs */}
+                    <div className="flex items-center gap-6">
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{activeTab === 'overview' ? 'Overview' : 'My Tasks'}</h1>
+                        
+                        {/* Desktop Tabs - Inline with title */}
+                        {activeTab === 'todos' && (
+                             <div className="hidden md:flex items-center bg-slate-100/80 p-1 rounded-lg border border-slate-200/60">
+                                <button 
+                                    onClick={() => setTodoTab('active')}
+                                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+                                        todoTab === 'active' 
+                                            ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' 
+                                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                    }`}
+                                >
+                                    Active
+                                </button>
+                                <button 
+                                    onClick={() => setTodoTab('completed')}
+                                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+                                        todoTab === 'completed' 
+                                            ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200' 
+                                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                    }`}
+                                >
+                                    Completed
+                                </button>
+                             </div>
+                        )}
+                    </div>
+
+                    {/* Right: Actions */}
+                    {activeTab === 'todos' && (
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            {/* Mobile Tabs - Full width on small screens */}
+                            <div className="md:hidden flex flex-1 bg-slate-100 p-1 rounded-lg">
+                                <button 
+                                    onClick={() => setTodoTab('active')}
+                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${todoTab === 'active' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
+                                >
+                                    Active
+                                </button>
+                                <button 
+                                    onClick={() => setTodoTab('completed')}
+                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${todoTab === 'completed' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'}`}
+                                >
+                                    Completed
+                                </button>
+                            </div>
+
+
+                            
+                            {/* View Toggle - Hidden on mobile if needed, or keep */}
+                            <div className="hidden sm:flex bg-slate-100 p-1 rounded-lg items-center border border-slate-200">
+                                <button 
+                                    onClick={() => setViewMode('board')}
+                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'board' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    title="Board View"
+                                >
+                                    <ICONS.Dashboard className="w-4 h-4" /> 
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    title="List View"
+                                >
+                                    <div className="flex flex-col gap-0.5 w-4 h-4 justify-center items-center">
+                                        <div className="w-3.5 h-0.5 bg-current rounded-full"></div>
+                                        <div className="w-3.5 h-0.5 bg-current rounded-full"></div>
+                                        <div className="w-3.5 h-0.5 bg-current rounded-full"></div>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <button onClick={() => { resetForm(); setShowAdd(true); }} className="btn-primary flex-shrink-0 !rounded-lg !py-2 !px-4 hover:shadow-md transition-all flex items-center gap-2">
+                                <ICONS.Plus className="w-4 h-4" />
+                                <span className="text-sm font-bold hidden sm:inline">New Task</span>
+                                <span className="sm:hidden">Add</span>
+                            </button>
+                        </div>
+                    )}
+
                 </div>
 
-                {activeTab === 'todos' && (
-                    <div className="flex items-center gap-3">
-                        <div className="relative w-64 hidden md:block">
-                            <ICONS.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input 
-                                type="text" 
-                                placeholder="Search tasks..." 
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full bg-white pl-9 pr-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-slate-700 outline-none transition-all shadow-sm"
-                            />
-                        </div>
-                        
-                        {/* View Toggle */}
-                        <div className="bg-slate-100 p-1 rounded-lg flex items-center border border-slate-200">
-                            <button 
-                                onClick={() => setViewMode('board')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'board' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                title="Board View"
-                            >
-                                <ICONS.Dashboard className="w-4 h-4" /> 
-                            </button>
-                            <button 
-                                onClick={() => setViewMode('list')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                title="List View"
-                            >
-                                <div className="flex flex-col gap-0.5 w-4 h-4 justify-center items-center">
-                                    <div className="w-3.5 h-0.5 bg-current rounded-full"></div>
-                                    <div className="w-3.5 h-0.5 bg-current rounded-full"></div>
-                                    <div className="w-3.5 h-0.5 bg-current rounded-full"></div>
-                                </div>
-                            </button>
-                        </div>
 
-                        <button onClick={() => { resetForm(); setShowAdd(true); }} className="btn-primary !rounded-lg !py-2 !px-4 hover:shadow-md transition-all flex items-center gap-2">
-                            <ICONS.Plus className="w-4 h-4" />
-                            <span className="text-sm font-bold">New Task</span>
-                        </button>
-                    </div>
-                )}
             </div>
 
             {/* View Content */}
@@ -762,15 +919,77 @@ const TodoApp: React.FC = () => {
                 /* Kanban Board Layout - Full Height */
                 <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden pb-2 -mx-6 px-6 md:mx-0 md:px-0">
                      <div className="h-full grid grid-cols-1 md:grid-cols-3 gap-6 min-w-[320px] md:min-w-0">
-                         <RenderTaskGroup title="Overdue" tasks={taskGroups.overdue} icon={ICONS.Calendar} colorClass="text-rose-600" bgClass="" />
-                         <RenderTaskGroup title="Upcoming" tasks={taskGroups.upcoming} icon={ICONS.Check} colorClass="text-indigo-600" bgClass="" />
-                         <RenderTaskGroup title="Completed" tasks={taskGroups.completed} icon={ICONS.CheckCircle} colorClass="text-emerald-600" bgClass="" />
+                         <RenderTaskGroup title="Overdue" tasks={boardGroups.overdue} icon={ICONS.Calendar} colorClass="text-rose-600" bgClass="" />
+                         <RenderTaskGroup title="Upcoming" tasks={boardGroups.upcoming} icon={ICONS.Check} colorClass="text-indigo-600" bgClass="" />
+                         <RenderTaskGroup title="Completed" tasks={boardGroups.completed} icon={ICONS.CheckCircle} colorClass="text-emerald-600" bgClass="" />
                      </div>
                 </div>
             ) : (
-                /* Table View - Full Height */
-                <div className="flex-1 overflow-auto pb-4 custom-scrollbar">
-                    <RenderTableView />
+                <div className="flex-1 overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                    {/* Integrated Toolbar */}
+                     <div className="flex flex-col md:flex-row gap-4 p-4 border-b border-slate-100 bg-white">
+                        {/* Search Bar */}
+                        <div className="relative flex-1">
+                            <ICONS.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input 
+                                type="text" 
+                                placeholder="Search tasks..." 
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                className="w-full bg-slate-50 pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 font-medium"
+                            />
+                        </div>
+
+                        {/* Group By Control */}
+                        <div className="flex items-center gap-3 pl-0 md:pl-4 md:border-l border-slate-100">
+                            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Group by</span>
+                            <div className="relative">
+                                <select 
+                                    value={groupBy}
+                                    onChange={(e) => setGroupBy(e.target.value as any)}
+                                    className="appearance-none pl-3 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 hover:bg-slate-100 cursor-pointer transition-all"
+                                >
+                                    <option value="none">None</option>
+                                    <option value="category">Category</option>
+                                    <option value="priority">Priority</option>
+                                    <option value="dueDate">Due Date</option>
+                                </select>
+                                <ICONS.ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                     </div>
+
+                     {/* Scrollable Content */}
+                     <div className="flex-1 overflow-auto custom-scrollbar p-0">  
+                         {groupBy !== 'none' && groupedTodos ? (
+                             <div className="space-y-8 p-4">
+                                 {groupedTodos.map((group) => (
+                                     <div key={group.title} className="space-y-3">
+                                         <div className="flex items-center gap-2">
+                                             <span className={`text-sm font-bold px-3 py-1 rounded-full border ${
+                                                groupBy === 'priority' ? (
+                                                    group.title === 'high' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                    group.title === 'medium' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                                    'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                ) : 'bg-slate-100 text-slate-800 border-slate-200'
+                                             }`}>
+                                                {group.title === 'high' || group.title === 'medium' || group.title === 'low' ? group.title.charAt(0).toUpperCase() + group.title.slice(1) : group.title}
+                                             </span>
+                                              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-white shadow-sm ring-2 ring-white ml-1">
+                                                {group.todos.length}
+                                              </span>
+                                         </div>
+                                         <RenderTableView todos={group.todos} />
+                                     </div>
+                                 ))}
+                                 {filteredTodos.length === 0 && (
+                                    <div className="text-center py-12 text-slate-400 text-sm">No tasks found</div>
+                                 )}
+                             </div>
+                         ) : (
+                            <RenderTableView todos={paginatedTodos} />
+                         )}
+                     </div>
                 </div>
             )}
             
