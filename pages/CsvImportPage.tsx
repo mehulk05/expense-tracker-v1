@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { CustomDatePicker } from '../components/ui/CustomDatePicker';
 import { useNavigate } from 'react-router-dom';
 import { ImportedExpense, Account, Category, AccountType, Expense } from '../types';
 import { ICONS } from '../constants';
@@ -709,11 +710,10 @@ const CsvImportPage: React.FC = () => {
                           
                           {/* Date */}
                           <td className="py-3 px-3">
-                            <input
-                              type="date"
+                            <CustomDatePicker
                               value={exp.date}
-                              onChange={(e) => handleFieldChange(exp.id, 'date', e.target.value)}
-                              className="w-full px-2 py-1.5 text-xs font-semibold border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
+                              onChange={(date) => handleFieldChange(exp.id, 'date', date)}
+                              className="w-[140px]"
                             />
                           </td>
                           

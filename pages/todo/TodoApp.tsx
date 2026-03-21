@@ -225,8 +225,11 @@ const TodoApp: React.FC = () => {
         return timeFilteredTodos
             .filter(t => {
                 // Tab Filter
-                if (todoTab === 'active') return !t.isCompleted;
-                if (todoTab === 'completed') return t.isCompleted;
+                // Only apply tab filter in LIST view
+                if (viewMode === 'list') {
+                    if (todoTab === 'active') return !t.isCompleted;
+                    if (todoTab === 'completed') return t.isCompleted;
+                }
                 return true;
             })
             .filter(t => {
@@ -247,7 +250,7 @@ const TodoApp: React.FC = () => {
                     return dateB - dateA;
                 }
             });
-    }, [timeFilteredTodos, todoTab, priorityFilter, searchQuery, sortConfig]);
+    }, [timeFilteredTodos, todoTab, priorityFilter, searchQuery, sortConfig, viewMode]);
 
     const handleSort = (key: string) => {
         setSortConfig(current => ({

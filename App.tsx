@@ -25,6 +25,9 @@ import TemplatePage from './pages/Template';
 
 import LandingPage from './pages/LandingPage';
 import InboxWithMiddlePanel from './pages/InboxGiaApproval';
+import PrivateTracker from './pages/private-tracker/PrivateTracker';
+import PolicyVault from './pages/policy-vault/PolicyVault';
+import PersonalDiary from './pages/diary/PersonalDiary';
 
 
 const App: React.FC = () => {
@@ -131,6 +134,30 @@ const App: React.FC = () => {
              element={
                <ProtectedRoute>
                  <Layout><PlannedExpensesApp /></Layout>
+               </ProtectedRoute>
+             } 
+          />
+          <Route 
+             path="/private-tracker" 
+             element={
+               <ProtectedRoute>
+                 <Layout><PrivateTracker /></Layout>
+               </ProtectedRoute>
+             } 
+          />
+          <Route 
+             path="/policy-vault" 
+             element={
+               <ProtectedRoute>
+                 <Layout><PolicyVault /></Layout>
+               </ProtectedRoute>
+             } 
+          />
+          <Route 
+             path="/diary" 
+             element={
+               <ProtectedRoute>
+                 <Layout><PersonalDiary /></Layout>
                </ProtectedRoute>
              } 
           />

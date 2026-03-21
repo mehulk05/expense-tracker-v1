@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CustomDatePicker } from './ui/CustomDatePicker';
 import SidePopover from './SidePopover';
 import { ImportedExpense, Account, Category, AccountType } from '../types';
 import { ICONS } from '../constants';
@@ -145,11 +146,10 @@ const CsvImportPreview: React.FC<CsvImportPreviewProps> = ({
                     
                     {/* Date */}
                     <td className="py-3 px-4">
-                      <input
-                        type="date"
+                      <CustomDatePicker
                         value={exp.date}
-                        onChange={(e) => handleFieldChange(exp.id, 'date', e.target.value)}
-                        className="w-36 px-2 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
+                        onChange={(date) => handleFieldChange(exp.id, 'date', date)}
+                        className="w-36"
                       />
                     </td>
                     

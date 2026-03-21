@@ -114,3 +114,63 @@ export interface ImportedExpense extends Expense {
   isDuplicate?: boolean;
   skipDuplicate?: boolean; // User's choice: true = skip, false = import anyway
 }
+
+export interface NTMRecord {
+  id: string;
+  date: string;
+  count: number;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NTSRecord {
+  id: string;
+  date: string;
+  count: number;
+  participants: 1 | 2;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsuranceCategory = 'Health' | 'Term' | 'Car' | 'Two-wheeler' | 'Wife\'s health' | 'Wife\'s term' | 'Parents\' health' | 'Other';
+
+export interface InsurancePolicy {
+  id: string;
+  category: InsuranceCategory;
+  name: string;
+  policyNumber: string;
+  vehicleNumber?: string;
+  year: string;
+  startDate: string;
+  expiryDate: string;
+  idv?: number;
+  premium: number;
+  pdfUrl?: string; // Firebase Storage URL
+  pdfName?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DiaryEntry {
+  id: string;
+  date: string;
+  mood: string; // Emoji label
+  note?: string;
+  energy?: number; // 1-5
+  stress?: number; // 1-5
+  sleep?: number; // 1-5
+  gratitude?: string;
+  challenge?: string;
+  tags: string[];
+  isFavorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DiarySettings {
+  pinHash?: string;
+  hasPin: boolean;
+  lastUnlockedAt?: string;
+}

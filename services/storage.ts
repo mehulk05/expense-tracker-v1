@@ -8,8 +8,9 @@ import {
   query,
   orderBy
 } from 'firebase/firestore';
-import { db, auth } from './firebase';
-import { Account, Category, Expense, Todo } from '../types';
+import { db, auth, storage as firebaseStorage } from './firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { Account, Category, Expense, Todo, NTMRecord, NTSRecord, InsurancePolicy, DiaryEntry, DiarySettings } from '../types';
 import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES } from '../constants';
 
 const handleFirestoreError = (error: any, fallbackValue: any) => {
@@ -325,5 +326,161 @@ export const storage = {
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as import('../types').CreditCardBill));
     } catch (error) { return handleFirestoreError(error, []); }
+  },
+
+  // --- NTM Module ---
+  getNTMRecords: async (): Promise<NTMRecord[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/ntm_records`),
+        orderBy('date', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NTMRecord));
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
+
+  saveNTMRecord: async (record: NTMRecord) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await setDoc(doc(db, `users/${user.uid}/ntm_records`, record.id), record);
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+
+  deleteNTMRecord: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, `users/${user.uid}/ntm_records`, id));
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+
+  // --- NTS Module ---
+  getNTSRecords: async (): Promise<NTSRecord[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/nts_records`),
+        orderBy('date', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NTSRecord));
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
+
+  saveNTSRecord: async (record: NTSRecord) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await setDoc(doc(db, `users/${user.uid}/nts_records`, record.id), record);
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+
+  deleteNTSRecord: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, `users/${user.uid}/nts_records`, id));
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+
+  // --- Policy Vault Module ---
+  getPolicies: async (): Promise<InsurancePolicy[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/policies`),
+        orderBy('expiryDate', 'asc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InsurancePolicy));
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
+
+  savePolicy: async (policy: InsurancePolicy) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await setDoc(doc(db, `users/${user.uid}/policies`, policy.id), policy);
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+
+  deletePolicy: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, `users/${user.uid}/policies`, id));
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+
+  uploadPolicyPDF: async (policyId: string, file: File): Promise<string> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+    try {
+      const storageRef = ref(firebaseStorage, `users/${user.uid}/policies/${policyId}/${file.name}`);
+      await uploadBytes(storageRef, file);
+      return await getDownloadURL(storageRef);
+    } catch (error) {
+      console.error("Error uploading policy PDF:", error);
+      throw error;
+    }
+  },
+
+  // --- Personal Diary Module ---
+  getDiaryEntries: async (): Promise<DiaryEntry[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/diary_entries`),
+        orderBy('date', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DiaryEntry));
+    } catch (error) { return handleFirestoreError(error, []); }
+  },
+
+  saveDiaryEntry: async (entry: DiaryEntry) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await setDoc(doc(db, `users/${user.uid}/diary_entries`, entry.id), entry);
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+
+  deleteDiaryEntry: async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, `users/${user.uid}/diary_entries`, id));
+    } catch (error) { handleFirestoreError(error, null); }
+  },
+
+  getDiarySettings: async (): Promise<DiarySettings> => {
+    const user = auth.currentUser;
+    if (!user) return { hasPin: false };
+    try {
+      const d = await getDocs(query(collection(db, `users/${user.uid}/diary_settings`)));
+      if (d.empty) return { hasPin: false };
+      return d.docs[0].data() as DiarySettings;
+    } catch (error) { return { hasPin: false }; }
+  },
+
+  setDiaryPIN: async (pinHash: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      // Store in a single settings doc for the user
+      await setDoc(doc(db, `users/${user.uid}/diary_settings`, 'default'), {
+        pinHash,
+        hasPin: true,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) { handleFirestoreError(error, null); }
   }
 };

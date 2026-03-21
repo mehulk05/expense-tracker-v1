@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CustomDatePicker } from '../../../components/ui/CustomDatePicker';
 import { PlannedExpense, Category, Account } from '../../../types';
 import { ICONS } from '../../../constants';
 
@@ -124,12 +125,10 @@ const PlannedExpenseForm: React.FC<PlannedExpenseFormProps> = ({ expense, catego
                 </div>
                  <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Due Date</label>
-                    <input 
-                        type="date" 
-                        required
-                        value={formData.dueDate}
-                        onChange={e => setFormData({...formData, dueDate: e.target.value})}
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                    <CustomDatePicker 
+                        value={formData.dueDate || ''}
+                        onChange={date => setFormData({...formData, dueDate: date})}
+                        className="w-full"
                     />
                 </div>
             </div>

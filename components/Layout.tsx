@@ -61,6 +61,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Friends', path: '/splitwise/people', icon: ICONS.Account }
       ]
     },
+    { name: 'Activity', path: '/private-tracker', icon: ICONS.CheckCircle },
+    { name: 'Policy Vault', path: '/policy-vault', icon: ICONS.Document },
+    { name: 'Diary', path: '/diary', icon: ICONS.CheckCircle },
     // { name: 'Templates', path: '/templates', icon: ICONS.FileStack },
   ];
 
@@ -151,7 +154,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
         
-        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
+        <div className="p-4 md:p-8 w-full">
           {children}
         </div>
       </main>
