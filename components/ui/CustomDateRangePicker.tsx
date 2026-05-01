@@ -102,6 +102,7 @@ export const CustomDateRangePicker: React.FC<CustomDateRangePickerProps> = ({
       days.push(
         <button
           key={i}
+          type="button"
           onClick={() => handleDateClick(i)}
           className={`h-9 w-9 text-[11px] font-bold transition-all flex items-center justify-center relative z-10
             ${isStart || isEnd 
@@ -152,13 +153,13 @@ export const CustomDateRangePicker: React.FC<CustomDateRangePickerProps> = ({
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 p-5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 w-72">
           <div className="flex items-center justify-between mb-4">
-            <button onClick={handlePrevMonth} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
+            <button type="button" onClick={handlePrevMonth} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
                 <ICONS.ChevronLeft className="w-4 h-4" />
             </button>
             <div className="text-[11px] font-black text-slate-900 uppercase tracking-widest leading-none">
               {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
             </div>
-            <button onClick={handleNextMonth} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
+            <button type="button" onClick={handleNextMonth} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
                 <ICONS.ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -181,6 +182,7 @@ export const CustomDateRangePicker: React.FC<CustomDateRangePickerProps> = ({
                 <span className="text-[10px] font-bold text-blue-600">{tempStart ? 'Selecting end date...' : 'Range set'}</span>
             </div>
             <button 
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold transition-all"
             >

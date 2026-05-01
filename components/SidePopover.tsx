@@ -49,6 +49,7 @@ const SidePopover: React.FC<SidePopoverProps> = ({ isOpen, onClose, title, subti
             {subtitle && <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">{subtitle}</p>}
           </div>
           <button 
+            type="button"
             onClick={onClose} 
             className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all active:scale-95"
           >

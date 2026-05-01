@@ -78,6 +78,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
       days.push(
         <button
           key={i}
+          type="button"
           onClick={() => handleDateSelect(i)}
           className={`h-8 w-8 rounded-full text-[11px] font-bold transition-all flex items-center justify-center
             ${isSelected 
@@ -118,13 +119,13 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 p-4 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 w-64">
           <div className="flex items-center justify-between mb-4">
-            <button onClick={handlePrevMonth} className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
+            <button type="button" onClick={handlePrevMonth} className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
                 <ICONS.ChevronLeft className="w-4 h-4" />
             </button>
             <div className="text-xs font-black text-slate-900 uppercase tracking-widest leading-none">
               {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
             </div>
-            <button onClick={handleNextMonth} className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
+            <button type="button" onClick={handleNextMonth} className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
                 <ICONS.ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -143,6 +144,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           
           <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
             <button 
+                type="button"
                 onClick={() => {
                     const today = formatDate(new Date());
                     onChange(today);
@@ -153,6 +155,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                 Today
             </button>
             <button 
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="text-[10px] font-bold text-slate-400 hover:text-slate-600"
             >
